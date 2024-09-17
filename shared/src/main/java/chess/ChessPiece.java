@@ -52,9 +52,37 @@ public class ChessPiece {
      *
      * @return Collection of valid moves
      */
+
+
+
+
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> validMove = new ArrayList<>();
+        //return each pieces valid moves
+        if (this.type == PieceType.PAWN) {
+            PawnMove(board, myPosition, validMove);
+        }
+        else if (this.type == PieceType.ROOK) {
+            RookMove(board, myPosition, validMove);
+        }
+        else if (this.type == PieceType.KNIGHT) {
+            KnightMove(board, myPosition, validMove);
+        }
+        else if (this.type == PieceType.BISHOP) {
+            BishopMove(board, myPosition, validMove);
+        }
+        else if (this.type == PieceType.QUEEN) {
+            queenMove(board, myPosition, validMove);
+        }
+        else if (this.type == PieceType.KING) {
+            KingMove(board, myPosition, validMove);
+        }
 
         return validMove;
     }
+
+
+
+
 }
+
