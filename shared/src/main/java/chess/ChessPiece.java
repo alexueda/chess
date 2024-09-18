@@ -226,6 +226,12 @@ public class ChessPiece {
             }
         }
     }
+    private void QueenMove (ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
+        RookMove(board, myPosition, validMove);
+        BishopMove(board, myPosition, validMove);
+    }
+
+
 
 }
 
