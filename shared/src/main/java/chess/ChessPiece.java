@@ -164,7 +164,68 @@ public class ChessPiece {
                 validMove.add(new ChessMove(myPosition, newPosition, null));
         }
     }
-
+    private void BishopMove (ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
+        //move to right up diagnal
+        for (int i = 1; i <= 8; i++) {
+            ChessPosition newPosition = new ChessPosition (myPosition.getRow() + i, myPosition.getColumn() + i);
+            if (!InBound(newPosition)) {
+                break;
+            }
+            if (board.getPiece(newPosition) == null) {
+                validMove.add(new ChessMove(myPosition, newPosition, null));
+            } else {
+                if (board.getPiece(newPosition).getTeamColor() != this.pieceColor) {
+                    validMove.add(new ChessMove(myPosition, newPosition, null));
+                }
+                break;
+            }
+        }
+        //move to left up diagnal
+        for (int i = 1; i <= 8; i++) {
+            ChessPosition newPosition = new ChessPosition (myPosition.getRow() + i, myPosition.getColumn() - i);
+            if (!InBound(newPosition)) {
+                break;
+            }
+            if (board.getPiece(newPosition) == null) {
+                validMove.add(new ChessMove(myPosition, newPosition, null));
+            } else {
+                if (board.getPiece(newPosition).getTeamColor() != this.pieceColor) {
+                    validMove.add(new ChessMove(myPosition, newPosition, null));
+                }
+                break;
+            }
+        }
+        //move to right down diagnal
+        for (int i = 1; i <= 8; i++) {
+            ChessPosition newPosition = new ChessPosition (myPosition.getRow() - i, myPosition.getColumn() + i);
+            if (!InBound(newPosition)) {
+                break;
+            }
+            if (board.getPiece(newPosition) == null) {
+                validMove.add(new ChessMove(myPosition, newPosition, null));
+            } else {
+                if (board.getPiece(newPosition).getTeamColor() != this.pieceColor) {
+                    validMove.add(new ChessMove(myPosition, newPosition, null));
+                }
+                break;
+            }
+        }
+        //move to left down diagnal
+        for (int i = 1; i <= 8; i++) {
+            ChessPosition newPosition = new ChessPosition (myPosition.getRow() - i, myPosition.getColumn() - i);
+            if (!InBound(newPosition)) {
+                break;
+            }
+            if (board.getPiece(newPosition) == null) {
+                validMove.add(new ChessMove(myPosition, newPosition, null));
+            } else {
+                if (board.getPiece(newPosition).getTeamColor() != this.pieceColor) {
+                    validMove.add(new ChessMove(myPosition, newPosition, null));
+                }
+                break;
+            }
+        }
+    }
 
 }
 
