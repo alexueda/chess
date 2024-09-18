@@ -155,10 +155,10 @@ public class ChessPiece {
     }
     private void KnightMove (ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
     //Knight move collection
-        int[][] kMove = {
+        int[][] knMove = {
                 {2,1}, {2,-1}, {-2,1}, {-2,-1}, {1,2},{-1,2}, {1,-2}, {-1,-2}
         };
-        for (int[] move : kMove) {
+        for (int[] move : knMove) {
             ChessPosition newPosition = new ChessPosition(myPosition.getRow() + move[0], myPosition.getColumn() + move[1]);
             if (InBound(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.pieceColor))
                 validMove.add(new ChessMove(myPosition, newPosition, null));
@@ -231,7 +231,15 @@ public class ChessPiece {
         BishopMove(board, myPosition, validMove);
     }
 
-
-
+    private void KingMove (ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
+        int[][] kiMove = {
+                {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}
+        };
+        for (int[] move : kiMove) {
+            ChessPosition newPosition = new ChessPosition(myPosition.getRow() + move[0], myPosition.getColumn() + move[1]);
+            if (InBound(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.pieceColor))
+                validMove.add(new ChessMove(myPosition, newPosition, null));
+        }
+    }
 }
 
