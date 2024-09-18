@@ -61,26 +61,42 @@ public class ChessPiece {
         //return each pieces valid moves
         if (this.type == PieceType.PAWN) {
             PawnMove(board, myPosition, validMove);
-        }
-        else if (this.type == PieceType.ROOK) {
+        } else if (this.type == PieceType.ROOK) {
             RookMove(board, myPosition, validMove);
-        }
-        else if (this.type == PieceType.KNIGHT) {
+        } else if (this.type == PieceType.KNIGHT) {
             KnightMove(board, myPosition, validMove);
-        }
-        else if (this.type == PieceType.BISHOP) {
+        } else if (this.type == PieceType.BISHOP) {
             BishopMove(board, myPosition, validMove);
-        }
-        else if (this.type == PieceType.QUEEN) {
-            queenMove(board, myPosition, validMove);
-        }
-        else if (this.type == PieceType.KING) {
+        } else if (this.type == PieceType.QUEEN) {
+            QueenMove(board, myPosition, validMove);
+        } else if (this.type == PieceType.KING) {
             KingMove(board, myPosition, validMove);
         }
-
         return validMove;
     }
+    //Bounds check
+    private boolean InBound(ChessPosition position) {
+        return position.getRow() >= 1 && position.getRow() <= 8 && position.getColumn() >= 1 && position.getColumn() <= 8;
+    }
 
+    //PAWN Method
+    private void PawnMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
+        int OneMove; //move one up(WHITE) and down(BLACK)
+        if (this.pieceColor == ChessGame.TeamColor.WHITE) {
+            OneMove = 1;
+        } else {
+            OneMove = -1;
+        }
+        ChessPosition foward = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn());
+        //valid check to go foward
+        if (InBound(foward) && board.getPiece(foward) == null) ; {
+            validMove.add(new ChessMove(myPosition, foward, null));
+        }
+        ChessPosition leftEnemy = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn()-1);
+        ChessPosition rightEnemy = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn()+1);
+        //valid check to capture
+
+    }
 
 
 
