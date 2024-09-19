@@ -19,7 +19,7 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        squares[position.getRow()][position.getColumn()] = piece;
+        squares[position.getRow() -1][position.getColumn() -1] = piece;
     }
 
     /**
@@ -30,7 +30,7 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return squares[position.getRow() - 1][position.getColumn() - 1];
+        return squares[position.getRow() -1][position.getColumn() -1];
     }
 
     /**
@@ -38,7 +38,7 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        squares = new ChessPiece[8][8];
+        squares = new ChessPiece[8][8];//size 8 by 8
         //White-P
         for (int i = 1; i <= 8; i++) {
             addPiece(new ChessPosition(2,i), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
