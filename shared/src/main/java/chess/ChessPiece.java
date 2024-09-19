@@ -95,25 +95,32 @@ public class ChessPiece {
 
     //PAWN Method
     private void PawnMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
-        int OneMove; //move one up(WHITE) and down(BLACK)
+        int oneMove; //move one up(WHITE) and down(BLACK)
         if (this.pieceColor == ChessGame.TeamColor.WHITE) {
-            OneMove = 1;
+            oneMove = 1;
         } else {
-            OneMove = -1;
+            oneMove = -1;
         }
-        ChessPosition foward = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn());
-        //valid check to go forward
-        if (InBound(foward) && board.getPiece(foward) == null)  {
-            validMove.add(new ChessMove(myPosition, foward, null));
+        ChessPosition forward = new ChessPosition(myPosition.getRow() + oneMove, myPosition.getColumn());
+        if (InBound(forward) && board.getPiece(forward) == null)  {
+            validMove.add(new ChessMove(myPosition, forward, null));
         }
-        ChessPosition leftEnemy = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn()-1);
-        ChessPosition rightEnemy = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn()+1);
-        //valid check to capture
+        //left diagonal enemy
+        ChessPosition leftEnemy = new ChessPosition(myPosition.getRow() + oneMove, myPosition.getColumn() - 1);
         if (InBound(leftEnemy) && board.getPiece(leftEnemy) != null && board.getPiece(leftEnemy).getTeamColor() != this.pieceColor) {
             validMove.add(new ChessMove(myPosition, leftEnemy, null));
         }
-        if (InBound(rightEnemy) && board.getPiece(leftEnemy) != null && board.getPiece(rightEnemy).getTeamColor() != this.pieceColor); {
+        //right diagonal enemy
+        ChessPosition rightEnemy = new ChessPosition(myPosition.getRow() + oneMove, myPosition.getColumn() + 1);
+        if (InBound(rightEnemy) && board.getPiece(rightEnemy) != null && board.getPiece(rightEnemy).getTeamColor() != this.pieceColor) {
             validMove.add(new ChessMove(myPosition, rightEnemy, null));
+        }
+        // first two forward move option
+        if ((this.pieceColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2) || (this.pieceColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7)) {
+            ChessPosition twoMove = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn());
+            if (InBound(twoMove) && board.getPiece(twoMove) == null) {
+                validMove.add(new ChessMove(myPosition, twoMove, null));
+            }
         }
     }
 
