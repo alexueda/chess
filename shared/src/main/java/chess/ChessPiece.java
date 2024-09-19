@@ -102,14 +102,14 @@ public class ChessPiece {
             OneMove = -1;
         }
         ChessPosition foward = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn());
-        //valid check to go foward
-        if (InBound(foward) && board.getPiece(foward) == null) ; {
+        //valid check to go forward
+        if (InBound(foward) && board.getPiece(foward) == null)  {
             validMove.add(new ChessMove(myPosition, foward, null));
         }
         ChessPosition leftEnemy = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn()-1);
         ChessPosition rightEnemy = new ChessPosition(myPosition.getRow() + OneMove, myPosition.getColumn()+1);
         //valid check to capture
-        if (InBound(leftEnemy) && board.getPiece(leftEnemy) != null && board.getPiece(leftEnemy).getTeamColor() != this.pieceColor); {
+        if (InBound(leftEnemy) && board.getPiece(leftEnemy) != null && board.getPiece(leftEnemy).getTeamColor() != this.pieceColor) {
             validMove.add(new ChessMove(myPosition, leftEnemy, null));
         }
         if (InBound(rightEnemy) && board.getPiece(leftEnemy) != null && board.getPiece(rightEnemy).getTeamColor() != this.pieceColor); {
@@ -143,7 +143,7 @@ public class ChessPiece {
             }
         }
         //move up
-        for (int r = myPosition.getColumn() + 1; r <= 8; r++) {
+        for (int r = myPosition.getRow() + 1; r <= 8; r++) {
             ChessPosition newPosition = new ChessPosition (r, myPosition.getColumn());
             if (board.getPiece(newPosition) == null) {
                 validMove.add(new ChessMove(myPosition, newPosition, null));
@@ -155,7 +155,7 @@ public class ChessPiece {
             }
         }
         //move down
-        for (int r = myPosition.getColumn() - 1; r >= 1; r--) {
+        for (int r = myPosition.getRow() - 1; r >= 1; r--) {
             ChessPosition newPosition = new ChessPosition (r, myPosition.getColumn());
             if (board.getPiece(newPosition) == null) {
                 validMove.add(new ChessMove(myPosition, newPosition, null));
@@ -167,6 +167,7 @@ public class ChessPiece {
             }
         }
     }
+
     private void KnightMove (ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
     //Knight move collection
         int[][] knMove = {
