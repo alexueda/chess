@@ -92,6 +92,13 @@ public class ChessPiece {
     private boolean InBound(ChessPosition position) {
         return position.getRow() >= 1 && position.getRow() <= 8 && position.getColumn() >= 1 && position.getColumn() <= 8;
     }
+    //helper method to take care the PawnPromotion
+    private void helpPromotion(ChessPosition myPosition, ChessPosition targetPosition, Collection<ChessMove> validMove) {
+        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.QUEEN));
+        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.ROOK));
+        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.KNIGHT));
+        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.BISHOP));
+    }
 
     //PAWN Method
     private void PawnMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
@@ -101,24 +108,40 @@ public class ChessPiece {
         } else {
             oneMove = -1;
         }
+        //check promotion or not
+        boolean promotion = (this.pieceColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 7) ||
+                (this.pieceColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 2);
+        //basic forward move
         ChessPosition forward = new ChessPosition(myPosition.getRow() + oneMove, myPosition.getColumn());
-        if (InBound(forward) && board.getPiece(forward) == null)  {
-            validMove.add(new ChessMove(myPosition, forward, null));
+        if (InBound(forward) && board.getPiece(forward) == null) {
+            if (promotion) {
+                helpPromotion(myPosition, forward, validMove);
+            } else {
+                validMove.add(new ChessMove(myPosition, forward, null));
+            }
         }
         //left diagonal enemy
         ChessPosition leftEnemy = new ChessPosition(myPosition.getRow() + oneMove, myPosition.getColumn() - 1);
         if (InBound(leftEnemy) && board.getPiece(leftEnemy) != null && board.getPiece(leftEnemy).getTeamColor() != this.pieceColor) {
-            validMove.add(new ChessMove(myPosition, leftEnemy, null));
+            if (promotion) {
+                helpPromotion(myPosition, leftEnemy, validMove);
+            } else {
+                validMove.add(new ChessMove(myPosition, leftEnemy, null));
+            }
         }
         //right diagonal enemy
         ChessPosition rightEnemy = new ChessPosition(myPosition.getRow() + oneMove, myPosition.getColumn() + 1);
         if (InBound(rightEnemy) && board.getPiece(rightEnemy) != null && board.getPiece(rightEnemy).getTeamColor() != this.pieceColor) {
-            validMove.add(new ChessMove(myPosition, rightEnemy, null));
+            if (promotion) {
+                helpPromotion(myPosition, rightEnemy, validMove);
+            } else {
+                validMove.add(new ChessMove(myPosition, rightEnemy, null));
+            }
         }
         // first two forward move option
         if ((this.pieceColor == ChessGame.TeamColor.WHITE && myPosition.getRow() == 2) || (this.pieceColor == ChessGame.TeamColor.BLACK && myPosition.getRow() == 7)) {
-            ChessPosition twoMove = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn());
-            if (InBound(twoMove) && board.getPiece(twoMove) == null) {
+            ChessPosition twoMove = new ChessPosition(myPosition.getRow() + 2 * oneMove, myPosition.getColumn()); //* multiple by oneMove to identify WHITE move or Black Move
+            if (board.getPiece(forward) == null && board.getPiece(twoMove) == null) {
                 validMove.add(new ChessMove(myPosition, twoMove, null));
             }
         }
