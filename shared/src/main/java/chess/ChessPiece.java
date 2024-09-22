@@ -94,10 +94,10 @@ public class ChessPiece {
     }
     //helper method to take care the PawnPromotion
     private void helpPromotion(ChessPosition myPosition, ChessPosition targetPosition, Collection<ChessMove> validMove) {
-        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.QUEEN));
-        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.ROOK));
-        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.KNIGHT));
-        validMove.add(new ChessMove(myPosition, targetPosition, ChessPiece.PieceType.BISHOP));
+        validMove.add(new ChessMove(myPosition, targetPosition, PieceType.QUEEN));
+        validMove.add(new ChessMove(myPosition, targetPosition, PieceType.ROOK));
+        validMove.add(new ChessMove(myPosition, targetPosition, PieceType.KNIGHT));
+        validMove.add(new ChessMove(myPosition, targetPosition, PieceType.BISHOP));
     }
 
     //PAWN Method
