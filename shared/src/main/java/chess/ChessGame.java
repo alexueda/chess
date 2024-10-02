@@ -69,7 +69,36 @@ public class ChessGame implements Cloneable {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+        //check move is not invalid
+        if (piece == null) {
+            throw new InvalidMoveException("move is invalid: No piece at that position");
+        }
+        if (piece.getTeamColor() != nowTurn) {
+            throw  new InvalidMoveException("move is invalid: Not this team turn");
+        }
+        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
+        if (legalMoves == null || !legalMoves.contains(move)) {
+            throw new InvalidMoveException("Invalid move");
+        }
+        //modify board
+        executeMove(move);
+        //turn change
+        if (nowTurn == TeamColor.WHITE) {
+            nowTurn = TeamColor.BLACK;
+        } else {
+            nowTurn = TeamColor.WHITE;
+        }
+    }
+
+    private void executeMove(ChessMove move) {
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+        ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
+        if (capturedPiece != null && capturedPiece.getTeamColor() == piece.getTeamColor()) {
+            throw new RuntimeException("Can not capture the piece");
+        }
+        board.addPiece(move.getEndPosition(), piece);
+        board.addPiece(move.getStartPosition(), null);
     }
 
     /**
