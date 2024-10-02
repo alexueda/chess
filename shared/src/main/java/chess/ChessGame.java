@@ -114,6 +114,19 @@ public class ChessGame implements Cloneable {
         return null;
     }
 
+    private Collection<ChessPosition> getAllPieces() {
+        Collection<ChessPosition> pieces = new ArrayList<>();
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+                if (piece != null) {
+                    pieces.add(position);
+                }
+            }
+        }
+        return pieces;
+    }
     /**
      * Determines if the given team is in check
      *
@@ -121,7 +134,19 @@ public class ChessGame implements Cloneable {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPosition KingPosition =
+        ChessPosition kingPosition = findKing(teamColor);
+        for (ChessPosition pos : getAllPieces()) {
+            ChessPiece piece = board.getPiece(pos);
+            if (piece.getTeamColor() != teamColor) {
+                Collection <ChessMove> moves = piece.pieceMoves(board, pos);
+                for (ChessMove move: moves) {
+                    if (move.getEndPosition().equals(kingPosition)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -167,7 +192,7 @@ public class ChessGame implements Cloneable {
     public ChessGame clone() {
         try {
             ChessGame cloned = (ChessGame) super.clone();
-            cloned.board = board.clone();
+            cloned.board = board.clone();  // Ensure the board is cloned
             return cloned;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError("Cloning not supported");
