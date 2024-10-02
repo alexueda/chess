@@ -156,7 +156,24 @@ public class ChessGame implements Cloneable {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)) {
+            return false; // not check then not checkmate
+        }
+        for (ChessPosition pos: getAllPieces()) {
+            ChessPiece piece = board.getPiece(pos);
+            if (piece.getTeamColor() == teamColor) {
+                Collection<ChessMove> moves = piece.pieceMoves(board, pos);
+                for (ChessMove move: moves) {
+                    ChessGame clonedGame = this.clone();
+                    clonedGame.executeMove(move);
+                    //in the cloned board, move all the own possible piece and if king is not check after it then not checkmate
+                    if (!clonedGame.isInCheck(teamColor)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
