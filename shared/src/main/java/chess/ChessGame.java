@@ -2,6 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -33,6 +34,19 @@ public class ChessGame implements Cloneable {
      */
     public void setTeamTurn(TeamColor team) {
         this.nowTurn = team;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChessGame chessGame = (ChessGame) o;
+        return Objects.equals(board, chessGame.board) && nowTurn == chessGame.nowTurn;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(board, nowTurn);
     }
 
     /**
@@ -70,16 +84,21 @@ public class ChessGame implements Cloneable {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        //check move is not invalid
         if (piece == null) {
-            throw new InvalidMoveException("move is invalid: No piece at that position");
+            throw new InvalidMoveException("Move is invalid: No piece at that position.");//check piece is there or not
         }
         if (piece.getTeamColor() != nowTurn) {
-            throw  new InvalidMoveException("move is invalid: Not this team turn");
+            throw new InvalidMoveException("Move is invalid: Not this team's turn.");
         }
-        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
+        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());//get the array of valid moves
         if (legalMoves == null || !legalMoves.contains(move)) {
-            throw new InvalidMoveException("Invalid move");
+            throw new InvalidMoveException("Move is invalid: Not a legal move.");
+        }
+        ChessGame clonedGame = this.clone();
+        clonedGame.executeMove(move);
+        // Check if the move leaves the current team's King in check
+        if (clonedGame.isInCheck(nowTurn)) {
+            throw new InvalidMoveException("Move is invalid: King would be in check.");
         }
         //modify board
         executeMove(move);
@@ -94,9 +113,20 @@ public class ChessGame implements Cloneable {
     private void executeMove(ChessMove move) {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
+
         if (capturedPiece != null && capturedPiece.getTeamColor() == piece.getTeamColor()) {
-            throw new RuntimeException("Can not capture the piece");
+            throw new RuntimeException("Cannot capture a piece of the same team.");
         }
+
+        // Handle pawn promotion based on the promotion type in ChessMove
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            boolean isPromotion = (piece.getTeamColor() == TeamColor.WHITE && move.getEndPosition().getRow() == 8) ||
+                    (piece.getTeamColor() == TeamColor.BLACK && move.getEndPosition().getRow() == 1);
+            if (isPromotion && move.getPromotionPiece() != null) {
+                piece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
+            }
+        }
+        // Move the piece to the new position
         board.addPiece(move.getEndPosition(), piece);
         board.addPiece(move.getStartPosition(), null);
     }
@@ -106,7 +136,7 @@ public class ChessGame implements Cloneable {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition (row, col);
                 ChessPiece piece = board.getPiece(position);
-                if (piece != null && piece.getPieceType() == ChessPiece.PieceType.KNIGHT && piece.getTeamColor() == teamColor) {
+                if (piece != null && piece.getPieceType() == ChessPiece.PieceType.KING && piece.getTeamColor() == teamColor) {
                     return position;
                 }
             }
@@ -185,14 +215,18 @@ public class ChessGame implements Cloneable {
      */
     public boolean isInStalemate(TeamColor teamColor) {
         if (isInCheck(teamColor)) {
-            return false;
+            return false;// if check then not stalemate
         }
-        for (ChessPosition pos: getAllPieces()) {
+        for (ChessPosition pos : getAllPieces()) {
             ChessPiece piece = board.getPiece(pos);
             if (piece.getTeamColor() == teamColor) {
                 Collection<ChessMove> moves = piece.pieceMoves(board, pos);
-                if (!moves.isEmpty()) {
-                    return false;
+                for (ChessMove move : moves) {
+                    ChessGame clonedGame = this.clone(); //clone the board and try all the move
+                    clonedGame.executeMove(move);
+                    if (!clonedGame.isInCheck(teamColor)) {
+                        return false; //if there is valid move does not make check then not stalemate
+                    }
                 }
             }
         }
