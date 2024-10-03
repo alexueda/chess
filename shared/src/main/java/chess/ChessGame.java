@@ -66,14 +66,25 @@ public class ChessGame implements Cloneable {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null) {
-            return null;
-        }
-        if (piece.getTeamColor() != nowTurn) {
+        if (piece == null || piece.getTeamColor() != nowTurn) {
             return new ArrayList<>();
-            //This will return empty valid move array to none turn player's pieces
         }
-        return piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> validMoves = new ArrayList<>();
+        boolean isKingInCheck = isInCheck(nowTurn);  // Check if the king is in check
+        for (ChessMove move : piece.pieceMoves(board, startPosition)) {
+            ChessGame clonedGame = this.clone();
+            clonedGame.executeMove(move);  // Simulate the move on the cloned board
+            if (isKingInCheck) {
+                if (!clonedGame.isInCheck(nowTurn)) {
+                    validMoves.add(move); // If the move blocks or captures the piece attacking the king, add it as a valid move
+                }
+            } else {
+                if (!clonedGame.isInCheck(nowTurn)) {
+                    validMoves.add(move); // If the king is not in check, add moves that don't put the king in check
+                }
+            }
+        }
+        return validMoves;  // Return all valid moves
     }
 
     /**
@@ -214,18 +225,21 @@ public class ChessGame implements Cloneable {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
+        if (nowTurn != teamColor) {
+            return false;  // check it is your turn
+        }
         if (isInCheck(teamColor)) {
-            return false;// if check then not stalemate
+            return false;//If king in check then not stalemate
         }
         for (ChessPosition pos : getAllPieces()) {
             ChessPiece piece = board.getPiece(pos);
             if (piece.getTeamColor() == teamColor) {
                 Collection<ChessMove> moves = piece.pieceMoves(board, pos);
                 for (ChessMove move : moves) {
-                    ChessGame clonedGame = this.clone(); //clone the board and try all the move
-                    clonedGame.executeMove(move);
+                    ChessGame clonedGame = this.clone();
+                    clonedGame.executeMove(move);  // Simulate the move on cloned board
                     if (!clonedGame.isInCheck(teamColor)) {
-                        return false; //if there is valid move does not make check then not stalemate
+                        return false;  // There's at least one legal move left
                     }
                 }
             }
