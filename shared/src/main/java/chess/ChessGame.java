@@ -184,7 +184,19 @@ public class ChessGame implements Cloneable {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (isInCheck(teamColor)) {
+            return false;
+        }
+        for (ChessPosition pos: getAllPieces()) {
+            ChessPiece piece = board.getPiece(pos);
+            if (piece.getTeamColor() == teamColor) {
+                Collection<ChessMove> moves = piece.pieceMoves(board, pos);
+                if (!moves.isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
