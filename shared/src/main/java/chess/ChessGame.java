@@ -17,6 +17,7 @@ public class ChessGame implements Cloneable {
 
     public ChessGame() {
         this.board = new ChessBoard ();
+        board.resetBoard();
         this.nowTurn = TeamColor.WHITE;
     }
 
@@ -66,22 +67,16 @@ public class ChessGame implements Cloneable {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null || piece.getTeamColor() != nowTurn) {
+        if (piece == null) {
             return new ArrayList<>();
         }
         Collection<ChessMove> validMoves = new ArrayList<>();
-        boolean isKingInCheck = isInCheck(nowTurn);  // Check if the king is in check
         for (ChessMove move : piece.pieceMoves(board, startPosition)) {
             ChessGame clonedGame = this.clone();
             clonedGame.executeMove(move);  // Simulate the move on the cloned board
-            if (isKingInCheck) {
-                if (!clonedGame.isInCheck(nowTurn)) {
-                    validMoves.add(move); // If the move blocks or captures the piece attacking the king, add it as a valid move
-                }
-            } else {
-                if (!clonedGame.isInCheck(nowTurn)) {
-                    validMoves.add(move); // If the king is not in check, add moves that don't put the king in check
-                }
+            // If the king is not in check, add moves that don't put the king in check
+            if (!clonedGame.isInCheck(piece.getTeamColor())) {
+                validMoves.add(move); // If the move blocks or captures the piece attacking the king, add it as a valid move
             }
         }
         return validMoves;  // Return all valid moves
