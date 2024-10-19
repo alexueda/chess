@@ -6,21 +6,20 @@ import model.UserData;
 import model.AuthData;
 import java.util.UUID;
 
-public class RegisterService {
+public class LoginService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;
 
-    public RegisterService() {
+    public LoginService() {
         this.userDAO = new UserDAO();
         this.authDAO = new AuthDAO();
     }
 
-    public AuthData register(String username, String password, String email) {
-        if (userDAO.getUser(username) != null) {
-            throw new IllegalArgumentException("Username already taken.");
+    public AuthData login(String username, String password) {
+        UserData user = userDAO.getUser(username);
+        if (user == null || !user.password().equals(password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
         }
-        UserData newUser = new UserData(username, password, email);
-        userDAO.insertUser(newUser);
 
         AuthData authData = new AuthData(generateAuthToken(), username);
         authDAO.insertAuth(authData);
