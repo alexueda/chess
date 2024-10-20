@@ -15,14 +15,17 @@ public class RegisterService {
         this.authDAO = new AuthDAO();
     }
 
-    public AuthData register(String username, String password, String email) {
-        if (userDAO.getUser(username) != null) {
+    public AuthData register(UserData userData) {
+        // Check if the username is already taken
+        if (userDAO.getUser(userData.username()) != null) {
             throw new IllegalArgumentException("Username already taken.");
         }
-        UserData newUser = new UserData(username, password, email);
-        userDAO.insertUser(newUser);
 
-        AuthData authData = new AuthData(generateAuthToken(), username);
+        userDAO.insertUser(userData);
+
+        // Generate an auth token for the new user
+        AuthData authData = new AuthData(generateAuthToken(), userData.username());
+
         authDAO.insertAuth(authData);
 
         return authData;
