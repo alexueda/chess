@@ -1,6 +1,7 @@
 package server;
 
 import spark.*;
+import handler.*;
 
 public class Server {
 
@@ -10,6 +11,11 @@ public class Server {
         Spark.staticFiles.location("web");
 
         // Register your endpoints and handle exceptions here.
+        // Initialize all handler instances
+        ClearHandler clearHandler = new ClearHandler();
+
+        // use spark web flame to create endpoint setup
+        Spark.delete("/db", (req, res) -> clearHandler.handleClear(req, res)); // Clear database
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();
