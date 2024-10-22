@@ -16,19 +16,24 @@ public class LoginHandler {
             res.status(200);
             return gson.toJson(result);
         } catch (IllegalArgumentException e) {
-            // If login failed due to incorrect username or password
             res.status(401);
-            return gson.toJson("Error: Unauthorized. " + e.getMessage());
+            return gson.toJson(new ErrorResponse("Error: Unauthorized. " + e.getMessage()));
         } catch (Exception e) {
-            // Handle any other errors
             res.status(500);
-            return gson.toJson("Error: " + e.getMessage());
+            return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
         }
     }
 
-    // A simple class to represent the login request
     private static class LoginRequest {
         String username;
         String password;
+    }
+
+    private static class ErrorResponse {
+        String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
     }
 }

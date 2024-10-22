@@ -3,7 +3,6 @@ package handler;
 import com.google.gson.Gson;
 import service.RegisterService;
 import model.UserData;
-import model.AuthData;
 import spark.*;
 
 public class RegisterHandler {
@@ -12,19 +11,31 @@ public class RegisterHandler {
 
     public Object handleRegister(Request req, Response res) {
         try {
+            // Parse the request body into a UserData object
             UserData userData = gson.fromJson(req.body(), UserData.class);
-            AuthData registerResult = registerService.register(userData);
-            //registration successful
-            res.status(200);
-            return gson.toJson(registerResult);
+
+            // Pass the UserData object to the register method
+            var result = registerService.register(userData);
+
+            res.status(200);  // Success status
+            return gson.toJson(result);  // Return result in JSON
         } catch (IllegalArgumentException e) {
-            // "username already taken" error
-            res.status(403);
-            return gson.toJson("Error: " + e.getMessage());
+            // If registration failed due to username already taken
+            res.status(403);  // Forbidden status
+            return gson.toJson(new ErrorResponse("Error: Username already taken."));
         } catch (Exception e) {
-            // Handle other bad request errors
-            res.status(400);
-            return gson.toJson("Error: " + e.getMessage());
+            // Handle any other errors
+            res.status(500);  // Internal server error status
+            return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    // A simple class to represent the error response
+    private static class ErrorResponse {
+        String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
         }
     }
 }

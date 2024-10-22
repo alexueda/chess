@@ -16,16 +16,16 @@ public class RegisterService {
     }
 
     public AuthData register(UserData userData) {
-        // Check if the username is already taken
+        // Check if the user already exists
         if (userDAO.getUser(userData.username()) != null) {
             throw new IllegalArgumentException("Username already taken.");
         }
 
+        // Insert the new user into the userDAO
         userDAO.insertUser(userData);
 
-        // Generate an auth token for the new user
+        // Generate auth token and store it in the authDAO
         AuthData authData = new AuthData(generateAuthToken(), userData.username());
-
         authDAO.insertAuth(authData);
 
         return authData;

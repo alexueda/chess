@@ -8,8 +8,8 @@ public class AuthDAO {
 
     private Map<String, AuthData> authTable = new HashMap<>();
 
-    public void insertAuth(AuthData auth) {
-        authTable.put(auth.authToken(), auth);
+    public void insertAuth(AuthData authData) {
+        authTable.put(authData.authToken(), authData);
     }
 
     public AuthData getAuth(String authToken) {
@@ -20,7 +20,7 @@ public class AuthDAO {
         authTable.remove(authToken);
     }
 
-    public void clearAuth() {
+    public void clearAuths() {
         authTable.clear();
     }
 }
