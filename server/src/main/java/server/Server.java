@@ -2,19 +2,23 @@ package server;
 
 import spark.*;
 import handler.*;
+import dataaccess.*;
 
 public class Server {
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
-
         Spark.staticFiles.location("web");
+
+        UserDAO userDAO = new UserDAO();
+        AuthDAO authDAO = new AuthDAO();
+        GameDAO gameDAO = new GameDAO();
 
         // Register your endpoints and handle exceptions here.
         // Initialize all handler instances
-        ClearHandler clearHandler = new ClearHandler();
+        ClearHandler clearHandler = new ClearHandler(userDAO, authDAO, gameDAO);
         RegisterHandler registerHandler = new RegisterHandler();
-        LoginHandler loginHandler = new LoginHandler();
+        LoginHandler loginHandler = new LoginHandler(UserDAO, AuthDAO);
         LogoutHandler logoutHandler = new LogoutHandler();
         ListGamesHandler listGamesHandler = new ListGamesHandler();
         CreateGameHandler createGameHandler = new CreateGameHandler();

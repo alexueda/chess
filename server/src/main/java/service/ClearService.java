@@ -9,10 +9,10 @@ public class ClearService {
     private final AuthDAO authDAO;
     private final GameDAO gameDAO;
 
-    public ClearService() {
-        this.userDAO = new UserDAO();
-        this.authDAO = new AuthDAO();
-        this.gameDAO = new GameDAO();
+    public ClearService(UserDAO userDAO, AuthDAO authDAO, GameDAO gameDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
     }
 
     public void clear() {
