@@ -19,7 +19,7 @@ public class Server {
         ClearHandler clearHandler = new ClearHandler(userDAO, authDAO, gameDAO);
         RegisterHandler registerHandler = new RegisterHandler();
         LoginHandler loginHandler = new LoginHandler(userDAO, authDAO);
-        LogoutHandler logoutHandler = new LogoutHandler();
+        LogoutHandler logoutHandler = new LogoutHandler(authDAO);
         ListGamesHandler listGamesHandler = new ListGamesHandler();
         CreateGameHandler createGameHandler = new CreateGameHandler();
         JoinGameHandler joinGameHandler = new JoinGameHandler();

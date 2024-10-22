@@ -6,8 +6,8 @@ import model.AuthData;
 public class LogoutService {
     private final AuthDAO authDAO;
 
-    public LogoutService() {
-        this.authDAO = new AuthDAO();
+    public LogoutService(AuthDAO authDAO) {
+        this.authDAO = authDAO;
     }
 
     public void logout(String authToken) {

@@ -1,5 +1,7 @@
 package handler;
 
+import dataaccess.*;
+import service.ClearService;
 import service.LogoutService;
 import spark.*;
 import com.google.gson.Gson;
@@ -7,8 +9,14 @@ import com.google.gson.Gson;
 import java.util.Map;
 
 public class LogoutHandler {
-    private final LogoutService logoutService = new LogoutService();
+    private final LogoutService logoutService;
     private final Gson gson = new Gson();
+    private final AuthDAO authDAO;
+
+    public LogoutHandler (AuthDAO authDAO) {
+        this.authDAO = authDAO;
+        this.logoutService = new LogoutService(authDAO);
+    }
 
     public Object handleLogout(Request req, Response res) {
         try {

@@ -1,10 +1,7 @@
 package handler;
 
 import com.google.gson.Gson;
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
-import dataaccess.UserDAO;
-import service.ClearService;
+import dataaccess.*;
 import service.LoginService;
 import spark.Request;
 import spark.Response;
