@@ -7,11 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListGamesService {
-
     private final GameDAO gameDAO;
 
-    public ListGamesService() {
-        this.gameDAO = new GameDAO();
+    public ListGamesService(GameDAO gameDAO) {
+        this.gameDAO = gameDAO;
     }
 
     public List<GameData> listAllGames() {

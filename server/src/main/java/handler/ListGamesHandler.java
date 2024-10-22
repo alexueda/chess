@@ -1,5 +1,9 @@
 package handler;
 
+import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
+import dataaccess.UserDAO;
+import service.ClearService;
 import service.ListGamesService;
 import model.GameData;
 import spark.*;
@@ -8,8 +12,14 @@ import com.google.gson.Gson;
 
 
 public class ListGamesHandler {
-    private final ListGamesService listGamesService = new ListGamesService();
+    private final ListGamesService listGamesService;
     private final Gson gson = new Gson();
+    private final GameDAO gameDAO;
+
+    public ListGamesHandler (GameDAO gameDAO) {
+        this.gameDAO = gameDAO;
+        this.listGamesService = new ListGamesService(gameDAO);
+    }
 
     public Object handleListGames(Request req, Response res) {
         try {
