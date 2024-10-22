@@ -10,10 +10,9 @@ public class LoginService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;
 
-    // Modified constructor to accept UserDAO and AuthDAO as parameters
-    public LoginService(UserDAO userDAO, AuthDAO authDAO) {
-        this.userDAO = userDAO;
-        this.authDAO = authDAO;
+    public LoginService() {
+        this.userDAO = new UserDAO();
+        this.authDAO = new AuthDAO();
     }
 
     public AuthData login(String username, String password) {
@@ -21,16 +20,16 @@ public class LoginService {
         if (user == null || !user.password().equals(password)) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
-
         AuthData authData = new AuthData(generateAuthToken(), username);
         authDAO.insertAuth(authData);
-
         return authData;
     }
 
     private String generateAuthToken() {
         return UUID.randomUUID().toString();
     }
-}
 
+
+
+}
 
