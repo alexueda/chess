@@ -6,13 +6,12 @@ import model.AuthData;
 import model.GameData;
 
 public class CreateGameService {
-
     private final GameDAO gameDAO;
     private final AuthDAO authDAO;
 
-    public CreateGameService() {
-        this.gameDAO = new GameDAO();
-        this.authDAO = new AuthDAO();
+    public CreateGameService(AuthDAO authDAO, GameDAO gameDAO) {
+        this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
     }
 
     public GameData createGame(String gameName, String authToken) throws Exception {

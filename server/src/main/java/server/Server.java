@@ -21,7 +21,7 @@ public class Server {
         LoginHandler loginHandler = new LoginHandler(userDAO, authDAO);
         LogoutHandler logoutHandler = new LogoutHandler(authDAO);
         ListGamesHandler listGamesHandler = new ListGamesHandler(gameDAO);
-        CreateGameHandler createGameHandler = new CreateGameHandler();
+        CreateGameHandler createGameHandler = new CreateGameHandler(authDAO, gameDAO);
         JoinGameHandler joinGameHandler = new JoinGameHandler();
 
         // Define your endpoints and map them to the corresponding handler methods

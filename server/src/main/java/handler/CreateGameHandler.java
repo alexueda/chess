@@ -1,14 +1,22 @@
 package handler;
 
 import com.google.gson.Gson;
+import dataaccess.*;
 import model.GameData;
 import service.CreateGameService;
 import spark.*;
 
 public class CreateGameHandler {
-
-    private final CreateGameService createGameService = new CreateGameService();
+    private final CreateGameService createGameService;
     private final Gson gson = new Gson();
+    private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
+
+    public CreateGameHandler (AuthDAO authDAO, GameDAO gameDAO) {
+        this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
+        this.createGameService = new CreateGameService(authDAO, gameDAO);
+    }
 
     public Object handleCreateGame(Request req, Response res) {
         try {
