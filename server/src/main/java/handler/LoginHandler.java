@@ -2,8 +2,7 @@ package handler;
 
 import com.google.gson.Gson;
 import service.LoginService;
-import spark.Request;
-import spark.Response;
+import spark.*;
 import model.AuthData;
 
 public class LoginHandler {
@@ -14,7 +13,6 @@ public class LoginHandler {
         try {
             LoginRequest loginRequest = gson.fromJson(req.body(), LoginRequest.class);
             AuthData result = loginService.login(loginRequest.username, loginRequest.password);
-
             res.status(200);
             return gson.toJson(result);
         } catch (IllegalArgumentException e) {

@@ -6,11 +6,11 @@ import model.GameData;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListGameService {
+public class ListGamesService {
 
     private final GameDAO gameDAO;
 
-    public ListGameService() {
+    public ListGamesService() {
         this.gameDAO = new GameDAO();
     }
 
