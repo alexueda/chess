@@ -10,9 +10,10 @@ public class LoginService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;
 
-    public LoginService() {
-        this.userDAO = new UserDAO();
-        this.authDAO = new AuthDAO();
+    // Modified constructor to accept UserDAO and AuthDAO as parameters
+    public LoginService(UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
     }
 
     public AuthData login(String username, String password) {
@@ -31,3 +32,5 @@ public class LoginService {
         return UUID.randomUUID().toString();
     }
 }
+
+

@@ -11,26 +11,25 @@ public class RegisterHandler {
 
     public Object handleRegister(Request req, Response res) {
         try {
-            // Parse the request body into a UserData object
             UserData userData = gson.fromJson(req.body(), UserData.class);
-
-            // Pass the UserData object to the register method
+            if (userData.username() == null || userData.username().isEmpty() ||
+                    userData.password() == null || userData.password().isEmpty() ||
+                    userData.email() == null || userData.email().isEmpty()) {
+                res.status(400);
+                return gson.toJson(new ErrorResponse("Error: bad request"));
+            }
             var result = registerService.register(userData);
-
-            res.status(200);  // Success status
-            return gson.toJson(result);  // Return result in JSON
+            res.status(200);
+            return gson.toJson(result);
         } catch (IllegalArgumentException e) {
-            // If registration failed due to username already taken
-            res.status(403);  // Forbidden status
+            res.status(403);
             return gson.toJson(new ErrorResponse("Error: Username already taken."));
         } catch (Exception e) {
-            // Handle any other errors
-            res.status(500);  // Internal server error status
+            res.status(500);
             return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
         }
     }
 
-    // A simple class to represent the error response
     private static class ErrorResponse {
         String message;
 

@@ -15,22 +15,19 @@ public class RegisterService {
         this.authDAO = new AuthDAO();
     }
 
-    public AuthData register(UserData userData) {
-        // Check if the user already exists
-        if (userDAO.getUser(userData.username()) != null) {
+    public AuthData register(UserData user) {
+        if (user.username() == null || user.password() == null || user.email() == null) {
+            throw new IllegalArgumentException("Bad request: Missing required fields.");
+        }
+        if (userDAO.getUser(user.username()) != null) {
             throw new IllegalArgumentException("Username already taken.");
         }
-
-        // Insert the new user into the userDAO
-        userDAO.insertUser(userData);
-
-        // Generate auth token and store it in the authDAO
-        AuthData authData = new AuthData(generateAuthToken(), userData.username());
+        AuthData authData = new AuthData(generateAuthToken(), user.username());
+        userDAO.insertUser(user);
         authDAO.insertAuth(authData);
 
         return authData;
     }
-
     private String generateAuthToken() {
         return UUID.randomUUID().toString();
     }
