@@ -6,13 +6,12 @@ import model.AuthData;
 import model.GameData;
 
 public class JoinGameService {
-
-    private final GameDAO gameDAO;
     private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
 
-    public JoinGameService(GameDAO gameDAO, AuthDAO authDAO) {
-        this.gameDAO = gameDAO;
+    public JoinGameService(AuthDAO authDAO, GameDAO gameDAO) {
         this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
     }
 
     public void joinGame(int gameID, String playerColor, String authToken) throws Exception {

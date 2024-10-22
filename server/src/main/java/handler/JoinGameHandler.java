@@ -1,5 +1,7 @@
 package handler;
 
+import dataaccess.UserDAO;
+import service.ClearService;
 import service.JoinGameService;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
@@ -8,12 +10,15 @@ import com.google.gson.Gson;
 import java.util.*;
 
 public class JoinGameHandler {
-
     private final JoinGameService joinGameService;
     private final Gson gson = new Gson();
+    private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
 
-    public JoinGameHandler() {
-        this.joinGameService = new JoinGameService(new GameDAO(), new AuthDAO());
+    public JoinGameHandler (AuthDAO authDAO, GameDAO gameDAO) {
+        this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
+        this.joinGameService = new JoinGameService(authDAO, gameDAO);
     }
 
     public Object handleJoinGame(Request req, Response res) {

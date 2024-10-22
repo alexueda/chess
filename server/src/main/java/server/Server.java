@@ -22,7 +22,7 @@ public class Server {
         LogoutHandler logoutHandler = new LogoutHandler(authDAO);
         ListGamesHandler listGamesHandler = new ListGamesHandler(gameDAO);
         CreateGameHandler createGameHandler = new CreateGameHandler(authDAO, gameDAO);
-        JoinGameHandler joinGameHandler = new JoinGameHandler();
+        JoinGameHandler joinGameHandler = new JoinGameHandler(authDAO, gameDAO);
 
         // Define your endpoints and map them to the corresponding handler methods
         Spark.delete("/db", (req, res) -> clearHandler.handleClear(req, res)); // Clear database
