@@ -1,13 +1,25 @@
 package handler;
 
 import com.google.gson.Gson;
+import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
+import dataaccess.UserDAO;
+import service.ClearService;
 import service.RegisterService;
 import model.UserData;
 import spark.*;
 
 public class RegisterHandler {
-    private final RegisterService registerService = new RegisterService();
+    private final RegisterService registerService;
     private final Gson gson = new Gson();
+    private final UserDAO userDAO;
+    private final AuthDAO authDAO;
+
+    public RegisterHandler (UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
+        this.registerService = new RegisterService(userDAO, authDAO);
+    }
 
     public Object handleRegister(Request req, Response res) {
         try {

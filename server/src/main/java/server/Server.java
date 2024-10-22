@@ -17,7 +17,7 @@ public class Server {
         // Register your endpoints and handle exceptions here.
         // Initialize all handler instances
         ClearHandler clearHandler = new ClearHandler(userDAO, authDAO, gameDAO);
-        RegisterHandler registerHandler = new RegisterHandler();
+        RegisterHandler registerHandler = new RegisterHandler(userDAO, authDAO);
         LoginHandler loginHandler = new LoginHandler(userDAO, authDAO);
         LogoutHandler logoutHandler = new LogoutHandler(authDAO);
         ListGamesHandler listGamesHandler = new ListGamesHandler(gameDAO);

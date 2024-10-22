@@ -10,9 +10,9 @@ public class RegisterService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;
 
-    public RegisterService() {
-        this.userDAO = new UserDAO();
-        this.authDAO = new AuthDAO();
+    public RegisterService(UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
     }
 
     public AuthData register(UserData user) {
