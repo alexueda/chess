@@ -12,7 +12,7 @@ public class CreateGameHandler {
     private final AuthDAO authDAO;
     private final GameDAO gameDAO;
 
-    public CreateGameHandler (AuthDAO authDAO, GameDAO gameDAO) {
+    public CreateGameHandler(AuthDAO authDAO, GameDAO gameDAO) {
         this.authDAO = authDAO;
         this.gameDAO = gameDAO;
         this.createGameService = new CreateGameService(authDAO, gameDAO);
@@ -25,16 +25,20 @@ public class CreateGameHandler {
                 res.status(401);
                 return gson.toJson(new ErrorResponse("Error: Unauthorized, missing auth token."));
             }
+            if (authDAO.getAuth(authToken) == null) {
+                res.status(401); // Invalid auth token
+                return gson.toJson(new ErrorResponse("Error: Unauthorized, invalid auth token."));
+            }
             CreateGameRequest createGameRequest = gson.fromJson(req.body(), CreateGameRequest.class);
             if (createGameRequest.gameName == null || createGameRequest.gameName.isEmpty()) {
                 res.status(400);  // Bad Request
                 return gson.toJson(new ErrorResponse("Error: Bad request, missing game name."));
             }
             GameData createdGame = createGameService.createGame(createGameRequest.gameName, authToken);
-            res.status(200);
+            res.status(200); // Success
             return gson.toJson(new SuccessResponse(createdGame.gameID()));
         } catch (Exception e) {
-            res.status(500);
+            res.status(500); // Internal Server Error
             return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
         }
     }

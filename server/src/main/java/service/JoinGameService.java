@@ -17,7 +17,7 @@ public class JoinGameService {
     public void joinGame(int gameID, String playerColor, String authToken) throws Exception {
         AuthData authData = authDAO.getAuth(authToken);
         if (authData == null) {
-            throw new Exception("Unauthorized");
+            throw new IllegalArgumentException("Unauthorized");
         }
 
         GameData game = gameDAO.getGame(gameID);
@@ -25,7 +25,7 @@ public class JoinGameService {
             throw new Exception("Game not found");
         }
 
-        GameData updatedGame; //This is variable
+        GameData updatedGame;
 
         if (playerColor.equals("WHITE") && game.whiteUsername() == null) {
             updatedGame = new GameData(game.gameID(), authData.username(), game.blackUsername(), game.gameName(), game.game());
@@ -34,7 +34,7 @@ public class JoinGameService {
             updatedGame = new GameData(game.gameID(), game.whiteUsername(), authData.username(), game.gameName(), game.game());
         }
         else {
-            throw new Exception("Color already taken: This color is already assigned to another player.");
+            throw new IllegalArgumentException("Color already taken: This color is already assigned to another player.");
         }
 
         gameDAO.updateGame(updatedGame);

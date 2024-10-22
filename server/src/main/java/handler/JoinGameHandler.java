@@ -1,7 +1,5 @@
 package handler;
 
-import dataaccess.UserDAO;
-import service.ClearService;
 import service.JoinGameService;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
@@ -39,8 +37,13 @@ public class JoinGameHandler {
             res.status(200);
             return gson.toJson(new HashMap<>());
         } catch (IllegalArgumentException e) {
-            res.status(403);
-            return gson.toJson(createErrorResponse(e.getMessage()));
+            if(Objects.equals(e.getMessage(), "Unauthorized")) {
+                res.status(401);
+                return gson.toJson(createErrorResponse("Error: Unauthorized"));
+            } else {
+                res.status(403);
+                return gson.toJson(createErrorResponse("Error: already taken"));
+            }
         } catch (Exception e) {
             res.status(500);
             return gson.toJson(createErrorResponse("Error: " + e.getMessage()));
