@@ -1,6 +1,10 @@
 package handler;
 
 import com.google.gson.Gson;
+import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
+import dataaccess.UserDAO;
+import service.ClearService;
 import service.LoginService;
 import spark.Request;
 import spark.Response;
@@ -8,8 +12,16 @@ import model.AuthData;
 import model.UserData;
 
 public class LoginHandler {
-    private final LoginService loginService = new LoginService();
+    private final LoginService loginService;
     private final Gson gson = new Gson();
+    private final UserDAO userDAO;
+    private final AuthDAO authDAO;
+
+    public LoginHandler (UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
+        this.loginService = new LoginService(userDAO, authDAO);
+    }
 
     public Object handleLogin(Request req, Response res) {
         try {

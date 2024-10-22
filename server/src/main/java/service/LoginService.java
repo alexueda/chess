@@ -10,9 +10,9 @@ public class LoginService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;
 
-    public LoginService() {
-        this.userDAO = new UserDAO();
-        this.authDAO = new AuthDAO();
+    public LoginService(UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
     }
 
     public AuthData login(String username, String password) {

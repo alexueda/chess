@@ -18,7 +18,7 @@ public class Server {
         // Initialize all handler instances
         ClearHandler clearHandler = new ClearHandler(userDAO, authDAO, gameDAO);
         RegisterHandler registerHandler = new RegisterHandler();
-        LoginHandler loginHandler = new LoginHandler(UserDAO, AuthDAO);
+        LoginHandler loginHandler = new LoginHandler(userDAO, authDAO);
         LogoutHandler logoutHandler = new LogoutHandler();
         ListGamesHandler listGamesHandler = new ListGamesHandler();
         CreateGameHandler createGameHandler = new CreateGameHandler();
