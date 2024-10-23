@@ -55,7 +55,10 @@ public class ChessPiece {
             case ROOK -> rookMove(board, myPosition, validMove);
             case KNIGHT -> knightMove(board, myPosition, validMove);
             case BISHOP -> bishopMove(board, myPosition, validMove);
-            case QUEEN -> queenMove(board, myPosition, validMove);
+            case QUEEN -> {
+                rookMove(board, myPosition, validMove); // Queen moves like both rook and bishop
+                bishopMove(board, myPosition, validMove);
+            }
             case KING -> kingMove(board, myPosition, validMove);
         }
         return validMove;
@@ -97,7 +100,8 @@ public class ChessPiece {
         }
     }
 
-    private void checkPawnCapture(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset, boolean promotion) {
+    private void checkPawnCapture(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove,
+                                  int rowOffset, int colOffset, boolean promotion) {
         ChessPosition capturePosition = new ChessPosition(myPosition.getRow() + rowOffset, myPosition.getColumn() + colOffset);
         if (inBounds(capturePosition) && board.getPiece(capturePosition) != null && board.getPiece(capturePosition).getTeamColor() != this.pieceColor) {
             if (promotion) {
@@ -120,11 +124,6 @@ public class ChessPiece {
         checkDiagonalMoves(board, myPosition, validMove, 1, -1);
         checkDiagonalMoves(board, myPosition, validMove, -1, 1);
         checkDiagonalMoves(board, myPosition, validMove, -1, -1);
-    }
-
-    private void queenMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
-        rookMove(board, myPosition, validMove);
-        bishopMove(board, myPosition, validMove);
     }
 
     private void kingMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
@@ -154,21 +153,14 @@ public class ChessPiece {
     }
 
     private void checkLinearMoves(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset) {
-        for (int r = myPosition.getRow() + rowOffset, c = myPosition.getColumn() + colOffset;
-             inBounds(new ChessPosition(r, c)); r += rowOffset, c += colOffset) {
-            ChessPosition newPosition = new ChessPosition(r, c);
-            if (board.getPiece(newPosition) == null) {
-                validMove.add(new ChessMove(myPosition, newPosition, null));
-            } else {
-                if (board.getPiece(newPosition).getTeamColor() != this.pieceColor) {
-                    validMove.add(new ChessMove(myPosition, newPosition, null));
-                }
-                break;
-            }
-        }
+        checkMovesInDirection(board, myPosition, validMove, rowOffset, colOffset);
     }
 
     private void checkDiagonalMoves(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset) {
+        checkMovesInDirection(board, myPosition, validMove, rowOffset, colOffset);
+    }
+
+    private void checkMovesInDirection(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset) {
         for (int r = myPosition.getRow() + rowOffset, c = myPosition.getColumn() + colOffset;
              inBounds(new ChessPosition(r, c)); r += rowOffset, c += colOffset) {
             ChessPosition newPosition = new ChessPosition(r, c);
