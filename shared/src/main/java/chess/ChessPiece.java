@@ -103,7 +103,8 @@ public class ChessPiece {
     private void checkPawnCapture(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove,
                                   int rowOffset, int colOffset, boolean promotion) {
         ChessPosition capturePosition = new ChessPosition(myPosition.getRow() + rowOffset, myPosition.getColumn() + colOffset);
-        if (inBounds(capturePosition) && board.getPiece(capturePosition) != null && board.getPiece(capturePosition).getTeamColor() != this.pieceColor) {
+        if (inBounds(capturePosition) && board.getPiece(capturePosition) != null &&
+                board.getPiece(capturePosition).getTeamColor() != this.pieceColor) {
             if (promotion) {
                 handlePromotion(myPosition, capturePosition, validMove);
             } else {
