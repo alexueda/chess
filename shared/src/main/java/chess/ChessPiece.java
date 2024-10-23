@@ -130,12 +130,7 @@ public class ChessPiece {
                 {0, 1}, {1, 1}, {1, 0}, {1, -1},
                 {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}
         };
-        for (int[] move : kingMoves) {
-            ChessPosition newPosition = new ChessPosition(myPosition.getRow() + move[0], myPosition.getColumn() + move[1]);
-            if (inBounds(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.pieceColor)) {
-                validMove.add(new ChessMove(myPosition, newPosition, null));
-            }
-        }
+        checkPredefinedMoves(board, myPosition, validMove, kingMoves);
     }
 
     private void knightMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
@@ -143,7 +138,11 @@ public class ChessPiece {
                 {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
                 {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
         };
-        for (int[] move : knightMoves) {
+        checkPredefinedMoves(board, myPosition, validMove, knightMoves);
+    }
+
+    private void checkPredefinedMoves(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int[][] predefinedMoves) {
+        for (int[] move : predefinedMoves) {
             ChessPosition newPosition = new ChessPosition(myPosition.getRow() + move[0], myPosition.getColumn() + move[1]);
             if (inBounds(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.pieceColor)) {
                 validMove.add(new ChessMove(myPosition, newPosition, null));
