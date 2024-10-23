@@ -7,7 +7,7 @@ public class ChessBoard implements Cloneable {
     private ChessPiece[][] squares = new ChessPiece[8][8];
 
     public ChessBoard() {
-        // Empty constructor
+        // Default constructor
     }
 
     public void addPiece(ChessPosition position, ChessPiece piece) {
@@ -50,8 +50,12 @@ public class ChessBoard implements Cloneable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChessBoard that = (ChessBoard) o;
         return Objects.deepEquals(squares, that.squares);
     }
@@ -65,9 +69,9 @@ public class ChessBoard implements Cloneable {
     public ChessBoard clone() {
         try {
             ChessBoard cloned = (ChessBoard) super.clone();
-            cloned.squares = this.squares.clone();
+            cloned.squares = new ChessPiece[8][8];
             for (int i = 0; i < squares.length; i++) {
-                cloned.squares[i] = this.squares[i].clone();
+                cloned.squares[i] = squares[i].clone();  // Deep clone each row
             }
             return cloned;
         } catch (CloneNotSupportedException e) {

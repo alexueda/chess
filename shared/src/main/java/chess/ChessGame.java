@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
-
 public class ChessGame implements Cloneable {
 
     private ChessBoard board;
@@ -46,20 +45,34 @@ public class ChessGame implements Cloneable {
         BLACK
     }
 
+    /**
+     * Gets all valid moves for a piece without leaving the king in check.
+     *
+     * @param startPosition the starting position of the piece
+     * @return a collection of valid moves, or an empty list if no moves are valid
+     */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
         if (piece == null) {
             return new ArrayList<>();
         }
+
+        return filterValidMoves(piece.pieceMoves(board, startPosition), piece.getTeamColor());
+    }
+
+    /**
+     * Filters the moves that do not leave the king in check.
+     */
+    private Collection<ChessMove> filterValidMoves(Collection<ChessMove> moves, TeamColor teamColor) {
         Collection<ChessMove> validMoves = new ArrayList<>();
-        for (ChessMove move : piece.pieceMoves(board, startPosition)) {
+        for (ChessMove move : moves) {
             ChessGame clonedGame = this.clone();
-            clonedGame.executeMove(move); // Simulate the move on the cloned board
-            if (!clonedGame.isInCheck(piece.getTeamColor())) {
-                validMoves.add(move); // Add moves that don't put the king in check
+            clonedGame.executeMove(move);
+            if (!clonedGame.isInCheck(teamColor)) {
+                validMoves.add(move);
             }
         }
-        return validMoves; // Return all valid moves
+        return validMoves;
     }
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
@@ -70,15 +83,18 @@ public class ChessGame implements Cloneable {
         if (piece.getTeamColor() != nowTurn) {
             throw new InvalidMoveException("Move is invalid: Not this team's turn.");
         }
+
         Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
         if (legalMoves == null || !legalMoves.contains(move)) {
             throw new InvalidMoveException("Move is invalid: Not a legal move.");
         }
+
         ChessGame clonedGame = this.clone();
         clonedGame.executeMove(move);
         if (clonedGame.isInCheck(nowTurn)) {
             throw new InvalidMoveException("Move is invalid: King would be in check.");
         }
+
         executeMove(move);
         nowTurn = (nowTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
@@ -98,6 +114,7 @@ public class ChessGame implements Cloneable {
                 piece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
             }
         }
+
         board.addPiece(move.getEndPosition(), piece);
         board.addPiece(move.getStartPosition(), null);
     }
@@ -131,11 +148,14 @@ public class ChessGame implements Cloneable {
 
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPosition = findKing(teamColor);
+        return checkForCheck(kingPosition, teamColor);
+    }
+
+    private boolean checkForCheck(ChessPosition kingPosition, TeamColor teamColor) {
         for (ChessPosition pos : getAllPieces()) {
             ChessPiece piece = board.getPiece(pos);
             if (piece.getTeamColor() != teamColor) {
-                Collection<ChessMove> moves = piece.pieceMoves(board, pos);
-                for (ChessMove move : moves) {
+                for (ChessMove move : piece.pieceMoves(board, pos)) {
                     if (move.getEndPosition().equals(kingPosition)) {
                         return true;
                     }
@@ -149,31 +169,21 @@ public class ChessGame implements Cloneable {
         if (!isInCheck(teamColor)) {
             return false;
         }
-        for (ChessPosition pos : getAllPieces()) {
-            ChessPiece piece = board.getPiece(pos);
-            if (piece.getTeamColor() == teamColor) {
-                Collection<ChessMove> moves = piece.pieceMoves(board, pos);
-                for (ChessMove move : moves) {
-                    ChessGame clonedGame = this.clone();
-                    clonedGame.executeMove(move);
-                    if (!clonedGame.isInCheck(teamColor)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+        return noLegalMovesLeft(teamColor);
     }
 
     public boolean isInStalemate(TeamColor teamColor) {
         if (nowTurn != teamColor || isInCheck(teamColor)) {
             return false;
         }
+        return noLegalMovesLeft(teamColor);
+    }
+
+    private boolean noLegalMovesLeft(TeamColor teamColor) {
         for (ChessPosition pos : getAllPieces()) {
             ChessPiece piece = board.getPiece(pos);
             if (piece.getTeamColor() == teamColor) {
-                Collection<ChessMove> moves = piece.pieceMoves(board, pos);
-                for (ChessMove move : moves) {
+                for (ChessMove move : piece.pieceMoves(board, pos)) {
                     ChessGame clonedGame = this.clone();
                     clonedGame.executeMove(move);
                     if (!clonedGame.isInCheck(teamColor)) {
