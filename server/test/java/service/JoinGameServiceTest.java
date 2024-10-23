@@ -4,50 +4,58 @@ import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
+import org.junit.jupiter.api.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class JoinGameServiceTest {
 
+    private AuthDAO mockAuthDAO;
+    private GameDAO mockGameDAO;
+    private JoinGameService joinGameService;
+
+    @BeforeEach
+    public void setup() {
+        mockAuthDAO = new AuthDAO();
+        mockGameDAO = new GameDAO();
+        joinGameService = new JoinGameService(mockAuthDAO, mockGameDAO);
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("Join Game Successfully")
     public void testJoinGameSuccess() {
-        AuthDAO mockAuthDAO = new AuthDAO();
-        GameDAO mockGameDAO = new GameDAO();
+        // Arrange
         String validAuthToken = "authToken123";
         mockAuthDAO.insertAuth(new AuthData(validAuthToken, "testuser"));
         GameData game = new GameData(1, null, null, "testGame", null);
         mockGameDAO.insertGame(game);
-        JoinGameService joinGameService = new JoinGameService(mockAuthDAO, mockGameDAO);
+
+        // Act & Assert
         try {
             joinGameService.joinGame(1, "WHITE", validAuthToken);
             GameData updatedGame = mockGameDAO.getGame(1);
-            assert updatedGame != null : "Game should exist.";
-            assert updatedGame.whiteUsername().equals("testuser") : "Player should be assigned to the white team.";
+
+            Assertions.assertNotNull(updatedGame, "Game should exist.");
+            Assertions.assertEquals("testuser", updatedGame.whiteUsername(), "Player should be assigned to the white team.");
         } catch (Exception e) {
-            assert false : "Exception should not be thrown in success case.";
+            Assertions.fail("Exception should not be thrown in success case.");
         }
     }
 
+    @Test
+    @Order(2)
+    @DisplayName("Join Game Unauthorized")
     public void testJoinGameUnauthorized() {
-        AuthDAO mockAuthDAO = new AuthDAO();
-        GameDAO mockGameDAO = new GameDAO();
+        // Arrange
         GameData game = new GameData(1, null, null, "testGame", null);
         mockGameDAO.insertGame(game);
-        JoinGameService joinGameService = new JoinGameService(mockAuthDAO, mockGameDAO);
         String invalidAuthToken = "invalidToken";
-        boolean exceptionThrown = false;
-        try {
+
+        // Act & Assert
+        Exception exception = Assertions.assertThrows(Exception.class, () -> {
             joinGameService.joinGame(1, "WHITE", invalidAuthToken);
-        } catch (IllegalArgumentException e) {
-            exceptionThrown = true;
-        } catch (Exception e) {
-            exceptionThrown = true;
-        }
+        }, "Exception should be thrown for unauthorized access.");
 
-        assert exceptionThrown : "Exception should be thrown for unauthorized access.";
-    }
-
-    public static void main(String[] args) {
-        JoinGameServiceTest test = new JoinGameServiceTest();
-        test.testJoinGameSuccess();
-        test.testJoinGameUnauthorized();
-        System.out.println("All tests passed.");
+        Assertions.assertNotNull(exception, "Exception should be thrown for invalid auth token.");
     }
 }

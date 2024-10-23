@@ -2,35 +2,43 @@ package service;
 
 import dataaccess.AuthDAO;
 import model.AuthData;
+import org.junit.jupiter.api.*;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class LogoutServiceTest {
 
+    private AuthDAO mockAuthDAO;
+    private LogoutService logoutService;
+
+    @BeforeEach
+    public void setup() {
+        mockAuthDAO = new AuthDAO();
+        logoutService = new LogoutService(mockAuthDAO);
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("Logout Success")
     public void testLogoutSuccess() {
-        AuthDAO mockAuthDAO = new AuthDAO();
+        // Arrange
         String validAuthToken = "valid-token-123";
         mockAuthDAO.insertAuth(new AuthData(validAuthToken, "testuser"));
-        LogoutService logoutService = new LogoutService(mockAuthDAO);
+
+        // Act
         logoutService.logout(validAuthToken);
+
+        // Assert
         AuthData result = mockAuthDAO.getAuth(validAuthToken);
-        assert result == null : "Auth token should be deleted after logout.";
+        Assertions.assertNull(result, "Auth token should be deleted after logout.");
     }
 
+    @Test
+    @Order(2)
+    @DisplayName("Logout Invalid Token")
     public void testLogoutInvalidToken() {
-        AuthDAO mockAuthDAO = new AuthDAO();
-        LogoutService logoutService = new LogoutService(mockAuthDAO);
-        boolean exceptionThrown = false;
-        try {
+        // Act & Assert
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
             logoutService.logout("invalid-token-456");
-        } catch (IllegalArgumentException e) {
-            exceptionThrown = true;
-        }
-        assert exceptionThrown : "Exception should be thrown for invalid auth token.";
-    }
-
-    public static void main(String[] args) {
-        LogoutServiceTest test = new LogoutServiceTest();
-        test.testLogoutSuccess();
-        test.testLogoutInvalidToken();
-        System.out.println("All tests passed.");
+        }, "Exception should be thrown for invalid auth token.");
     }
 }
