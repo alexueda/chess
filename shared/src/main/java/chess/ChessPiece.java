@@ -114,17 +114,15 @@ public class ChessPiece {
     }
 
     private void rookMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
-        checkLinearMoves(board, myPosition, validMove, 1, 0);
-        checkLinearMoves(board, myPosition, validMove, -1, 0);
-        checkLinearMoves(board, myPosition, validMove, 0, 1);
-        checkLinearMoves(board, myPosition, validMove, 0, -1);
+        checkMovesInMultipleDirections(board, myPosition, validMove, new int[][]{
+                {1, 0}, {-1, 0}, {0, 1}, {0, -1}
+        });
     }
 
     private void bishopMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
-        checkDiagonalMoves(board, myPosition, validMove, 1, 1);
-        checkDiagonalMoves(board, myPosition, validMove, 1, -1);
-        checkDiagonalMoves(board, myPosition, validMove, -1, 1);
-        checkDiagonalMoves(board, myPosition, validMove, -1, -1);
+        checkMovesInMultipleDirections(board, myPosition, validMove, new int[][]{
+                {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+        });
     }
 
     private void kingMove(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove) {
@@ -153,12 +151,10 @@ public class ChessPiece {
         }
     }
 
-    private void checkLinearMoves(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset) {
-        checkMovesInDirection(board, myPosition, validMove, rowOffset, colOffset);
-    }
-
-    private void checkDiagonalMoves(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset) {
-        checkMovesInDirection(board, myPosition, validMove, rowOffset, colOffset);
+    private void checkMovesInMultipleDirections(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int[][] directions) {
+        for (int[] direction : directions) {
+            checkMovesInDirection(board, myPosition, validMove, direction[0], direction[1]);
+        }
     }
 
     private void checkMovesInDirection(ChessBoard board, ChessPosition myPosition, Collection<ChessMove> validMove, int rowOffset, int colOffset) {
