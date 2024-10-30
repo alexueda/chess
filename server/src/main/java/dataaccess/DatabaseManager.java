@@ -36,7 +36,7 @@ public class DatabaseManager {
     /**
      * Creates the database if it does not already exist.
      */
-    static void createDatabase() throws DataAccessException {
+    public static void createDatabase() throws DataAccessException {
         try {
             var statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
             var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
@@ -47,14 +47,14 @@ public class DatabaseManager {
             conn.setCatalog(DATABASE_NAME);
 
             String[] createTables = {
-                    """
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     username VARCHAR(50) UNIQUE NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
                     email VARCHAR(100) NOT NULL
                 )""",
-                    """
+                """
                 CREATE TABLE IF NOT EXISTS games (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     game_name VARCHAR(100) NOT NULL,
@@ -62,7 +62,7 @@ public class DatabaseManager {
                     created_by VARCHAR(50),
                     FOREIGN KEY (created_by) REFERENCES users(username)
                 )""",
-                    """
+                """
                 CREATE TABLE IF NOT EXISTS auth (
                     auth_token VARCHAR(100) PRIMARY KEY,
                     username VARCHAR(50),
