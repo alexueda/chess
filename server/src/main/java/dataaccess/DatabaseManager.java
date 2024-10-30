@@ -57,10 +57,12 @@ public class DatabaseManager {
                     """
                 CREATE TABLE IF NOT EXISTS games (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    game_name VARCHAR(100) NOT NULL,
-                    game_state JSON,
-                    created_by VARCHAR(50),
-                    FOREIGN KEY (created_by) REFERENCES users(username)
+                    whiteUsername VARCHAR(50),
+                    blackUsername VARCHAR(50),
+                    gameName VARCHAR(100) NOT NULL,
+                    gameState TEXT,
+                    FOREIGN KEY (whiteUsername) REFERENCES users(username),
+                    FOREIGN KEY (blackUsername) REFERENCES users(username)
                 )""",
                     """
                 CREATE TABLE IF NOT EXISTS auth (
@@ -69,6 +71,7 @@ public class DatabaseManager {
                     FOREIGN KEY (username) REFERENCES users(username)
                 )"""
             };
+
 
             for (String createTable : createTables) {
                 try (var preparedStatement = conn.prepareStatement(createTable)) {

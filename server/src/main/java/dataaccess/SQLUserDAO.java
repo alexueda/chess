@@ -1,10 +1,7 @@
 package dataaccess;
 
 import model.UserData;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class SQLUserDAO implements UserDAO {
 
@@ -23,7 +20,7 @@ public class SQLUserDAO implements UserDAO {
                 );
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error getting user", e);
+            throw new DataAccessException(e.getMessage());
         }
         return null;
     }
@@ -38,7 +35,7 @@ public class SQLUserDAO implements UserDAO {
             stmt.setString(3, user.email());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException("Error inserting user", e);
+            throw new DataAccessException(e.getMessage());
         }
     }
 
@@ -49,7 +46,7 @@ public class SQLUserDAO implements UserDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException("Error clearing users", e);
+            throw new DataAccessException(e.getMessage());
         }
     }
 }

@@ -14,9 +14,9 @@ public class ClearServiceTest {
 
     @BeforeEach
     public void setup() {
-        mockUserDAO = new UserDAO();
-        mockAuthDAO = new AuthDAO();
-        mockGameDAO = new GameDAO();
+        mockUserDAO = new SQLUserDAO();
+        mockAuthDAO = new SQLAuthDAO();
+        mockGameDAO = new SQLGameDAO();
         clearService = new ClearService(mockUserDAO, mockAuthDAO, mockGameDAO);
     }
 
