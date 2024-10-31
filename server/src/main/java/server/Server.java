@@ -7,12 +7,18 @@ import dataaccess.*;
 public class Server {
 
     public int run(int desiredPort) {
+        try {
+            DatabaseManager.createDatabase();
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Database initialization failed: " + e.getMessage());
+        }
+
         Spark.port(desiredPort);
         Spark.staticFiles.location("web");
 
-        UserDAO userDAO = new UserDAO();
-        AuthDAO authDAO = new AuthDAO();
-        GameDAO gameDAO = new GameDAO();
+        UserDAO userDAO = new SQLUserDAO();  // Use SQLUserDAO implementation
+        AuthDAO authDAO = new SQLAuthDAO();  // Use SQLAuthDAO implementation
+        GameDAO gameDAO = new SQLGameDAO();  // Use SQLGameDAO implementation
 
         // Register your endpoints and handle exceptions here.
         // Initialize all handler instances
@@ -33,10 +39,7 @@ public class Server {
         Spark.post("/game", (req, res) -> createGameHandler.handleCreateGame(req, res)); // Create game
         Spark.put("/game", (req, res) -> joinGameHandler.handleJoinGame(req, res)); // Join game
 
-
-        //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();
-
         Spark.awaitInitialization();
         return Spark.port();
     }

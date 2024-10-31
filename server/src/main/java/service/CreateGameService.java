@@ -14,15 +14,14 @@ public class CreateGameService {
         this.gameDAO = gameDAO;
     }
 
-    public GameData createGame(String gameName, String authToken) throws Exception {
+    public int createGame(String gameName, String authToken) throws Exception {
         AuthData authData = authDAO.getAuth(authToken);
         if (authData == null) {
             throw new Exception("Unauthorized");
         }
-        int newGameID = gameDAO.generateGameID();
-        GameData newGame = new GameData(newGameID, null, null, gameName, null);
-        gameDAO.insertGame(newGame);
+        GameData newGame = new GameData(0, null, null, gameName, null);
+        int gameID = gameDAO.insertGame(newGame);
 
-        return newGame;
+        return gameID;
     }
 }

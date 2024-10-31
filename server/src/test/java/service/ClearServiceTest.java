@@ -23,7 +23,7 @@ public class ClearServiceTest {
     @Test
     @Order(1)
     @DisplayName("Clear Data Successfully")
-    public void testClearSuccess() {
+    public void testClearSuccess() throws DataAccessException {
         // Set up mock data
         UserData testUser = new UserData("testuser", "password", "test@mail.com");
         mockUserDAO.insertUser(testUser);
@@ -42,7 +42,7 @@ public class ClearServiceTest {
     @Test
     @Order(2)
     @DisplayName("Clear Data with No Existing Data")
-    public void testClearNoData() {
+    public void testClearNoData() throws DataAccessException {
         // No data added to DAOs
 
         // Perform clear operation

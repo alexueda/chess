@@ -60,15 +60,12 @@ public class DatabaseManager {
                     whiteUsername VARCHAR(50),
                     blackUsername VARCHAR(50),
                     gameName VARCHAR(100) NOT NULL,
-                    gameState TEXT,
-                    FOREIGN KEY (whiteUsername) REFERENCES users(username),
-                    FOREIGN KEY (blackUsername) REFERENCES users(username)
+                    gameState TEXT
                 )""",
                     """
                 CREATE TABLE IF NOT EXISTS auth (
                     auth_token VARCHAR(100) PRIMARY KEY,
-                    username VARCHAR(50),
-                    FOREIGN KEY (username) REFERENCES users(username)
+                    username VARCHAR(50)
                 )"""
             };
 

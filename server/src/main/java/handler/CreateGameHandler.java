@@ -34,9 +34,9 @@ public class CreateGameHandler {
                 res.status(400);  // Bad Request
                 return gson.toJson(new ErrorResponse("Error: Bad request, missing game name."));
             }
-            GameData createdGame = createGameService.createGame(createGameRequest.gameName, authToken);
+            int gameID = createGameService.createGame(createGameRequest.gameName, authToken);
             res.status(200); // Success
-            return gson.toJson(new SuccessResponse(createdGame.gameID()));
+            return gson.toJson(new SuccessResponse(gameID));
         } catch (Exception e) {
             res.status(500); // Internal Server Error
             return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));

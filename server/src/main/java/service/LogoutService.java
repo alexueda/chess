@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import model.AuthData;
 
 public class LogoutService {
@@ -10,7 +11,7 @@ public class LogoutService {
         this.authDAO = authDAO;
     }
 
-    public void logout(String authToken) {
+    public void logout(String authToken) throws DataAccessException {
         AuthData authData = authDAO.getAuth(authToken);
         if (authData == null) {
             throw new IllegalArgumentException("Invalid auth token: Token does not exist.");

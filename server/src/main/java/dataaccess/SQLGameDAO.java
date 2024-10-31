@@ -7,6 +7,8 @@ import model.GameData;
 import java.sql.*;
 import java.util.*;
 
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
+
 public class SQLGameDAO implements GameDAO {
 
     private final Gson gson = new Gson();
@@ -32,16 +34,22 @@ public class SQLGameDAO implements GameDAO {
     }
 
     @Override
-    public void insertGame(GameData gameData) throws DataAccessException {
+    public int insertGame(GameData gameData) throws DataAccessException {
         String query = "INSERT INTO games (id, whiteUsername, blackUsername, gameName, gameState) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query, RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, gameData.gameID());
             stmt.setString(2, gameData.whiteUsername());
             stmt.setString(3, gameData.blackUsername());
             stmt.setString(4, gameData.gameName());
             stmt.setString(5, serializeGame(gameData.game()));
             stmt.executeUpdate();
+            var rs = stmt.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
+
         } catch (SQLException e) {
             throw new DataAccessException(e.getMessage());
         }
@@ -86,7 +94,7 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void clearGames() throws DataAccessException {
-        String query = "DELETE FROM games";
+        String query = "TRUNCATE TABLE games";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.executeUpdate();
