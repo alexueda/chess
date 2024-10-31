@@ -22,14 +22,9 @@ public class LogoutServiceTest {
     @Order(1)
     @DisplayName("Logout Success")
     public void testLogoutSuccess() throws DataAccessException {
-        // Arrange
         String validAuthToken = "valid-token-123";
         mockAuthDAO.insertAuth(new AuthData(validAuthToken, "testuser"));
-
-        // Act
         logoutService.logout(validAuthToken);
-
-        // Assert
         AuthData result = mockAuthDAO.getAuth(validAuthToken);
         Assertions.assertNull(result, "Auth token should be deleted after logout.");
     }

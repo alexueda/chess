@@ -16,7 +16,6 @@ public class LogoutService {
         if (authData == null) {
             throw new IllegalArgumentException("Invalid auth token: Token does not exist.");
         }
-
         authDAO.deleteAuth(authToken);
     }
 }

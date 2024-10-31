@@ -22,7 +22,6 @@ public class ListGamesService {
         if (authData == null) {
             throw new IllegalArgumentException("Unauthorized");
         }
-        // Convert Map values to List because if not this code will throw error
         return new ArrayList<>(gameDAO.getAllGames().values());
     }
 }

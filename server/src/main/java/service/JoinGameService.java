@@ -19,14 +19,11 @@ public class JoinGameService {
         if (authData == null) {
             throw new IllegalArgumentException("Unauthorized");
         }
-
         GameData game = gameDAO.getGame(gameID);
         if (game == null) {
             throw new Exception("Game not found");
         }
-
         GameData updatedGame;
-
         if (playerColor.equals("WHITE") && game.whiteUsername() == null) {
             updatedGame = new GameData(game.gameID(), authData.username(), game.blackUsername(), game.gameName(), game.game());
         }
@@ -36,7 +33,6 @@ public class JoinGameService {
         else {
             throw new IllegalArgumentException("Color already taken: This color is already assigned to another player.");
         }
-
         gameDAO.updateGame(updatedGame);
     }
 }

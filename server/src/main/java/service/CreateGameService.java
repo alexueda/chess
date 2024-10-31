@@ -21,7 +21,6 @@ public class CreateGameService {
         }
         GameData newGame = new GameData(0, null, null, gameName, null);
         int gameID = gameDAO.insertGame(newGame);
-
         return gameID;
     }
 }
