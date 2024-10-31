@@ -8,37 +8,41 @@ import org.junit.jupiter.api.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class JoinGameServiceTest {
 
+    private UserDAO mockUserDAO;
     private AuthDAO mockAuthDAO;
     private GameDAO mockGameDAO;
     private JoinGameService joinGameService;
+    private ClearService clearService;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws DataAccessException {
+        mockUserDAO = new SQLUserDAO();
         mockAuthDAO = new SQLAuthDAO();
         mockGameDAO = new SQLGameDAO();
         joinGameService = new JoinGameService(mockAuthDAO, mockGameDAO);
+
+        // Clear database before each test
+        clearService = new ClearService(mockUserDAO, mockAuthDAO, mockGameDAO);
+        clearService.clear();
     }
 
     @Test
     @Order(1)
     @DisplayName("Join Game Successfully")
-    public void testJoinGameSuccess() throws DataAccessException {
+    public void testJoinGameSuccess() throws Exception {  // Declaring Exception here
         // Arrange
         String validAuthToken = "authToken123";
         mockAuthDAO.insertAuth(new AuthData(validAuthToken, "testuser"));
         GameData game = new GameData(1, null, null, "testGame", null);
         mockGameDAO.insertGame(game);
 
-        // Act & Assert
-        try {
-            joinGameService.joinGame(1, "WHITE", validAuthToken);
-            GameData updatedGame = mockGameDAO.getGame(1);
+        // Act
+        joinGameService.joinGame(1, "WHITE", validAuthToken);
+        GameData updatedGame = mockGameDAO.getGame(1);
 
-            Assertions.assertNotNull(updatedGame, "Game should exist.");
-            Assertions.assertEquals("testuser", updatedGame.whiteUsername(), "Player should be assigned to the white team.");
-        } catch (Exception e) {
-            Assertions.fail("Exception should not be thrown in success case.");
-        }
+        // Assert
+        Assertions.assertNotNull(updatedGame, "Game should exist.");
+        Assertions.assertEquals("testuser", updatedGame.whiteUsername(), "Player should be assigned to the white team.");
     }
 
     @Test

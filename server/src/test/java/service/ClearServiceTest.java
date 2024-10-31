@@ -13,11 +13,14 @@ public class ClearServiceTest {
     private ClearService clearService;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws DataAccessException {
         mockUserDAO = new SQLUserDAO();
         mockAuthDAO = new SQLAuthDAO();
         mockGameDAO = new SQLGameDAO();
         clearService = new ClearService(mockUserDAO, mockAuthDAO, mockGameDAO);
+
+        // Clear the database to avoid duplicates between test runs
+        clearService.clear();
     }
 
     @Test

@@ -11,12 +11,17 @@ public class LoginServiceTest {
     private UserDAO mockUserDAO;
     private AuthDAO mockAuthDAO;
     private LoginService loginService;
+    private ClearService clearService;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws DataAccessException {
         mockUserDAO = new SQLUserDAO();
         mockAuthDAO = new SQLAuthDAO();
         loginService = new LoginService(mockUserDAO, mockAuthDAO);
+
+        // Initialize ClearService and clear data before each test
+        clearService = new ClearService(mockUserDAO, mockAuthDAO, new SQLGameDAO());
+        clearService.clear();
     }
 
     @Test
