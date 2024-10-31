@@ -1,7 +1,6 @@
 package service;
 
-import dataaccess.AuthDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.*;
@@ -15,15 +14,15 @@ public class LoginServiceTest {
 
     @BeforeEach
     public void setup() {
-        mockUserDAO = new UserDAO();
-        mockAuthDAO = new AuthDAO();
+        mockUserDAO = new SQLUserDAO();
+        mockAuthDAO = new SQLAuthDAO();
         loginService = new LoginService(mockUserDAO, mockAuthDAO);
     }
 
     @Test
     @Order(1)
     @DisplayName("Login Success")
-    public void testLoginSuccess() {
+    public void testLoginSuccess() throws DataAccessException {
         // Arrange
         String username = "testuser";
         String password = "password123";
@@ -41,7 +40,7 @@ public class LoginServiceTest {
     @Test
     @Order(2)
     @DisplayName("Login Failure - Incorrect Password")
-    public void testLoginFailure() {
+    public void testLoginFailure() throws DataAccessException {
         // Arrange
         String username = "testuser";
         String password = "password123";

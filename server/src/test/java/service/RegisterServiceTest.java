@@ -1,7 +1,6 @@
 package service;
 
-import dataaccess.UserDAO;
-import dataaccess.AuthDAO;
+import dataaccess.*;
 import model.UserData;
 import model.AuthData;
 import org.junit.jupiter.api.*;
@@ -15,15 +14,15 @@ public class RegisterServiceTest {
 
     @BeforeEach
     public void setup() {
-        mockUserDAO = new UserDAO();
-        mockAuthDAO = new AuthDAO();
+        mockUserDAO = new SQLUserDAO();
+        mockAuthDAO = new SQLAuthDAO();
         registerService = new RegisterService(mockUserDAO, mockAuthDAO);
     }
 
     @Test
     @Order(1)
     @DisplayName("Register Success")
-    public void testRegisterSuccess() {
+    public void testRegisterSuccess() throws DataAccessException {
         // Arrange
         UserData newUser = new UserData("testuser", "password123", "testuser@mail.com");
 

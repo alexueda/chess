@@ -1,7 +1,6 @@
 package service;
 
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
+import dataaccess.*;
 import model.AuthData;
 import model.GameData;
 import org.junit.jupiter.api.*;
@@ -17,15 +16,15 @@ public class ListGamesServiceTest {
 
     @BeforeEach
     public void setup() {
-        mockAuthDAO = new AuthDAO();
-        mockGameDAO = new GameDAO();
+        mockAuthDAO = new SQLAuthDAO();
+        mockGameDAO = new SQLGameDAO();
         listGamesService = new ListGamesService(mockAuthDAO, mockGameDAO);
     }
 
     @Test
     @Order(1)
     @DisplayName("List All Games Successfully")
-    public void testListAllGamesSuccess() {
+    public void testListAllGamesSuccess() throws DataAccessException {
         // Arrange
         String validAuthToken = "authToken123";
         mockAuthDAO.insertAuth(new AuthData(validAuthToken, "testuser"));
@@ -44,7 +43,7 @@ public class ListGamesServiceTest {
     @Test
     @Order(2)
     @DisplayName("List All Games Unauthorized")
-    public void testListAllGamesUnauthorized() {
+    public void testListAllGamesUnauthorized() throws DataAccessException {
         // Arrange
         mockGameDAO.insertGame(new GameData(1, "testuser1", null, "testGame1", null));
         String invalidAuthToken = "invalidToken";

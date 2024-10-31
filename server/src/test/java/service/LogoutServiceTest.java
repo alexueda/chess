@@ -1,6 +1,8 @@
 package service;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
+import dataaccess.SQLAuthDAO;
 import model.AuthData;
 import org.junit.jupiter.api.*;
 
@@ -12,14 +14,14 @@ public class LogoutServiceTest {
 
     @BeforeEach
     public void setup() {
-        mockAuthDAO = new AuthDAO();
+        mockAuthDAO = new SQLAuthDAO();
         logoutService = new LogoutService(mockAuthDAO);
     }
 
     @Test
     @Order(1)
     @DisplayName("Logout Success")
-    public void testLogoutSuccess() {
+    public void testLogoutSuccess() throws DataAccessException {
         // Arrange
         String validAuthToken = "valid-token-123";
         mockAuthDAO.insertAuth(new AuthData(validAuthToken, "testuser"));
