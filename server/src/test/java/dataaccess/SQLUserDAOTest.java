@@ -19,7 +19,6 @@ public class SQLUserDAOTest {
     public void testInsertUserSuccess() throws DataAccessException {
         UserData user = new UserData("testuser", "hashedPassword123", "testuser@mail.com");
         userDAO.insertUser(user);
-
         UserData retrievedUser = userDAO.getUser("testuser");
         assertNotNull(retrievedUser, "User should be retrieved after insertion");
         assertEquals("testuser", retrievedUser.username());
@@ -32,11 +31,9 @@ public class SQLUserDAOTest {
     public void testInsertDuplicateUser() throws DataAccessException {
         UserData user = new UserData("duplicateUser", "hashedPassword123", "duplicateUser@mail.com");
         userDAO.insertUser(user);
-
         DataAccessException exception = assertThrows(DataAccessException.class, () -> {
             userDAO.insertUser(user);
         }, "Inserting a duplicate user should throw DataAccessException");
-
         assertTrue(exception.getMessage().contains("Duplicate entry"), "Exception should indicate a duplicate entry");
     }
 
@@ -45,7 +42,6 @@ public class SQLUserDAOTest {
     public void testGetUserSuccess() throws DataAccessException {
         UserData user = new UserData("existingUser", "hashedPassword123", "existingUser@mail.com");
         userDAO.insertUser(user);
-
         UserData retrievedUser = userDAO.getUser("existingUser");
         assertNotNull(retrievedUser, "User should be retrieved successfully");
         assertEquals("existingUser", retrievedUser.username());
@@ -67,7 +63,6 @@ public class SQLUserDAOTest {
         UserData user2 = new UserData("user2", "hashedPassword2", "user2@mail.com");
         userDAO.insertUser(user1);
         userDAO.insertUser(user2);
-
         userDAO.clearUsers();
         assertNull(userDAO.getUser("user1"), "User1 should not be retrievable after clear");
         assertNull(userDAO.getUser("user2"), "User2 should not be retrievable after clear");
