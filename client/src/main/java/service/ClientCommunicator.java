@@ -1,4 +1,4 @@
-package ui;
+package service;
 
 public class ClientCommunicator {
 }
