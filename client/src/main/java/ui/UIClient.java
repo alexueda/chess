@@ -1,6 +1,7 @@
 package ui;
 
 import java.util.Scanner;
+import service.*;
 
 public class UIClient {
     private final ServerFacade server;
