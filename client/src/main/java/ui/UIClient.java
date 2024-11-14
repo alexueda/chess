@@ -98,7 +98,8 @@ public class UIClient {
                 }
                 break;
             case "list":
-                server.listGames().forEach(System.out::println);
+                server.listGames().forEach((id, name) -> System.out.println("Game ID: " + id + ", Game Name: " + name));
+
                 break;
             case "join":
                 if (parts.length < 3) {

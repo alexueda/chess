@@ -1,8 +1,10 @@
-import chess.*;
+import service.ServerFacade;
+import ui.UIClient;
 
 public class Main {
     public static void main(String[] args) {
-        var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-        System.out.println("♕ 240 Chess Client: " + piece);
+        ServerFacade serverFacade = new ServerFacade();
+        UIClient client = new UIClient(serverFacade);
+        client.start();
     }
 }
