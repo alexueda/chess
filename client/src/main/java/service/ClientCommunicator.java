@@ -43,11 +43,19 @@ public class ClientCommunicator {
         conn.setRequestMethod(method);
         conn.setRequestProperty("Content-Type", "application/json");
         if (authToken != null) {
-            conn.setRequestProperty("Authorization", "Bearer " + authToken);
+            // Experiment with different formats if "Bearer" is unexpected
+            conn.setRequestProperty("Authorization", authToken);
+            // OR try with "Bearer " if it's required by the server
+            // conn.setRequestProperty("Authorization", "Bearer " + authToken);
         }
         conn.setDoOutput("POST".equals(method) || "PUT".equals(method));
         return conn;
     }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
 
     private void writePayload(HttpURLConnection conn, String payload) throws IOException {
         try (OutputStream os = conn.getOutputStream()) {
