@@ -71,8 +71,7 @@ public class ServerFacade {
         String response = communicator.sendGetRequest("/game");
         Type responseType = new TypeToken<Map<String, List<GameData>>>(){}.getType();
         Map<String, List<GameData>> responseMap = gson.fromJson(response, responseType);
-        List<GameData> games = responseMap.get("games");
-        return games;
+        return responseMap.get("games");
     }
 
     public boolean joinGame(int gameId, String color) throws Exception {

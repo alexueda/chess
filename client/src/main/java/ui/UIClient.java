@@ -116,7 +116,10 @@ public class UIClient {
             case "list":
                 games = server.listGames();
                 for (int i = 0; i < games.size(); i++) {
-                    System.out.println( i+1 + " " + games.get(i).gameName());
+                    GameData game = games.get(i);
+                    String whitePlayer = game.whiteUsername() != null ? game.whiteUsername() : "null";
+                    String blackPlayer = game.blackUsername() != null ? game.blackUsername() : "null";
+                    System.out.println((i + 1) + " " + game.gameName() + " WHITE: " + whitePlayer + " BLACK: " + blackPlayer);
                 }
                 break;
             case "join":
@@ -140,7 +143,7 @@ public class UIClient {
                     System.out.println("Usage: observe <GAME_ID>");
                 } else {
                     int index= Integer.parseInt(parts[1])- 1;
-                    new UIBoard();
+                    String gameState = server.observeGame(index);
                     if (gameState != null) {
                         System.out.println("Observing game " + index + ": " + gameState);
                     } else {
