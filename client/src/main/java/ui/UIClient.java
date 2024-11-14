@@ -1,7 +1,7 @@
 package ui;
 
 import java.util.Scanner;
-import service.*;
+import service.ServerFacade;
 
 public class UIClient {
     private final ServerFacade server;
@@ -22,9 +22,9 @@ public class UIClient {
             String command = parts[0].toLowerCase();
             try {
                 if (!loggedIn) {
-                    handlePreLogin(command, parts);
+                    handlePreLogin(command, parts);  // Ensure this method exists
                 } else {
-                    handlePostLogin(command, parts);
+                    handlePostLogin(command, parts); // Ensure this method exists
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
@@ -47,10 +47,13 @@ public class UIClient {
                 } else {
                     String user = parts[1];
                     String pass = parts[2];
-                    server.login(user, pass);
-                    loggedIn = true;
-                    this.username = user;
-                    System.out.println("Logged in as " + user);
+                    if (server.login(user, pass)) {
+                        loggedIn = true;
+                        this.username = user;
+                        System.out.println("Logged in as " + user);
+                    } else {
+                        System.out.println("Login failed.");
+                    }
                 }
                 break;
             case "register":
@@ -60,10 +63,13 @@ public class UIClient {
                     String user = parts[1];
                     String pass = parts[2];
                     String email = parts[3];
-                    server.register(user, pass, email);
-                    loggedIn = true;
-                    this.username = user;
-                    System.out.println("Logged in as " + user);
+                    if (server.register(user, pass, email)) {
+                        loggedIn = true;
+                        this.username = user;
+                        System.out.println("Registered and logged in as " + user);
+                    } else {
+                        System.out.println("Registration failed.");
+                    }
                 }
                 break;
             default:
@@ -84,40 +90,54 @@ public class UIClient {
                 showPostLoginHelp();
                 break;
             case "logout":
-                server.logout();
-                loggedIn = false;
-                System.out.println("Logged out.");
+                if (server.logout()) {
+                    loggedIn = false;
+                    System.out.println("Logged out.");
+                } else {
+                    System.out.println("Logout failed.");
+                }
                 break;
             case "create":
                 if (parts.length < 2) {
                     System.out.println("Usage: create <GAME_NAME>");
                 } else {
                     String gameName = parts[1];
-                    server.createGame(gameName);
-                    System.out.println("Game '" + gameName + "' created.");
+                    if (server.createGame(gameName)) {
+                        System.out.println("Game '" + gameName + "' created.");
+                    } else {
+                        System.out.println("Failed to create game.");
+                    }
                 }
                 break;
             case "list":
-                server.listGames().forEach((id, name) -> System.out.println("Game ID: " + id + ", Game Name: " + name));
-
+                server.listGames().forEach(gameData ->
+                        System.out.println("Game ID: " + gameData.gameID() + ", Game Name: " + gameData.gameName())
+                );
                 break;
             case "join":
                 if (parts.length < 3) {
                     System.out.println("Usage: join <GAME_ID> <WHITE|BLACK>");
                 } else {
-                    int gameId = Integer.parseInt(parts[1]);
+                    String gameId = parts[1];
                     String color = parts[2].toUpperCase();
-                    server.joinGame(gameId, color);
-                    System.out.println("Joined game " + gameId + " as " + color);
+                    if (server.joinGame(gameId, color)) {
+                        System.out.println("Joined game " + gameId + " as " + color);
+                    } else {
+                        System.out.println("Failed to join game.");
+                    }
                 }
                 break;
             case "observe":
                 if (parts.length < 2) {
                     System.out.println("Usage: observe <GAME_ID>");
                 } else {
-                    int gameId = Integer.parseInt(parts[1]);
-                    server.observeGame(gameId);
-                    System.out.println("Observing game " + gameId);
+                    String gameId = parts[1];
+                    String gameState = server.observeGame(gameId);
+                    if (gameState != null) {
+                        System.out.println("Observing game " + gameId + ": " + gameState);
+                    } else {
+                        System.out.println("Failed to observe game.");
+                    }
                 }
                 break;
             case "quit":
@@ -130,6 +150,7 @@ public class UIClient {
     }
 
     private void showPostLoginHelp() {
+        System.out.println("Commands:");
         System.out.println("  create <GAME_NAME> - create a new game");
         System.out.println("  list - list all games");
         System.out.println("  join <GAME_ID> <WHITE|BLACK> - join a game");

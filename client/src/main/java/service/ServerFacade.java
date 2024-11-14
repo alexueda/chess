@@ -1,6 +1,10 @@
 package service;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import model.GameData;
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 public class ServerFacade {
@@ -18,14 +22,13 @@ public class ServerFacade {
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("authToken")) {
             communicator.setAuthToken((String) responseMap.get("authToken"));
-            System.out.println("Auth token set: " + responseMap.get("authToken")); // Debug print
+            System.out.println("Auth token set: " + responseMap.get("authToken"));
             return true;
         } else {
             System.out.println("Error: " + responseMap.get("message"));
             return false;
         }
     }
-
 
     public boolean register(String username, String password, String email) throws Exception {
         Map<String, String> credentials = Map.of("username", username, "password", password, "email", email);
@@ -34,38 +37,7 @@ public class ServerFacade {
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("authToken")) {
             communicator.setAuthToken((String) responseMap.get("authToken"));
-            return true;
-        } else {
-            throw new Exception("Registration failed: " + responseMap.getOrDefault("message", "Unknown error"));
-        }
-    }
-
-
-    public Integer createGame(String gameName) throws Exception {
-        Map<String, String> gameData = Map.of("gameName", gameName);
-        String response = communicator.sendPostRequest("/game", gson.toJson(gameData));
-
-        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("gameID")) {
-            return ((Double) responseMap.get("gameID")).intValue();
-        } else {
-            throw new Exception("Create game failed: " + responseMap.getOrDefault("message", "Unknown error"));
-        }
-    }
-
-    public Map<Integer, String> listGames() throws Exception {
-        System.out.println("Listing games with token: " + communicator.getAuthToken()); // Debug
-        String response = communicator.sendGetRequest("/game");
-        return gson.fromJson(response, Map.class);
-    }
-
-    public boolean logout() throws Exception {
-        System.out.println("Attempting logout with token: " + communicator.getAuthToken()); // Debug
-        String response = communicator.sendDeleteRequest("/session");
-
-        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("message") && responseMap.get("message").equals("Successfully logged out")) {
-            communicator.clearAuthToken();
+            System.out.println("Auth token set: " + responseMap.get("authToken"));
             return true;
         } else {
             System.out.println("Error: " + responseMap.get("message"));
@@ -73,26 +45,71 @@ public class ServerFacade {
         }
     }
 
-    public boolean joinGame(int gameId, String color) throws Exception {
+    public boolean logout() throws Exception {
+        String response = communicator.sendDeleteRequest("/session");
+
+        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
+        if (responseMap.containsKey("message") && "Successfully logged out".equals(responseMap.get("message"))) {
+            communicator.clearAuthToken();
+            System.out.println("Logged out successfully.");
+            return true;
+        } else {
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
+        }
+    }
+
+    public boolean createGame(String gameName) throws Exception {
+        Map<String, String> gameData = Map.of("gameName", gameName, "gameID", gameName); // Set gameID and gameName to be the same
+        String response = communicator.sendPostRequest("/game", gson.toJson(gameData));
+
+        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
+        if (responseMap.containsKey("gameID")) {
+            System.out.println("Game created with ID: " + responseMap.get("gameID"));
+            return true;
+        } else {
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
+        }
+    }
+
+    public List<GameData> listGames() throws Exception {
+        String response = communicator.sendGetRequest("/game");
+
+        // Parse the "games" list from the response JSON
+        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
+        if (responseMap.containsKey("games")) {
+            Type gameListType = new TypeToken<List<GameData>>() {}.getType();
+            return gson.fromJson(gson.toJson(responseMap.get("games")), gameListType);
+        } else {
+            System.out.println("Error: " + responseMap.get("message"));
+            return null;
+        }
+    }
+
+    public boolean joinGame(String gameId, String color) throws Exception {
         Map<String, Object> gameData = Map.of("gameID", gameId, "playerColor", color);
         String response = communicator.sendPutRequest("/game", gson.toJson(gameData));
 
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("success") && (Boolean) responseMap.get("success")) {
+            System.out.println("Joined game successfully.");
             return true;
         } else {
-            throw new Exception("Join game failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
         }
     }
 
-    public String observeGame(int gameId) throws Exception {
+    public String observeGame(String gameId) throws Exception {
         String response = communicator.sendGetRequest("/game/observe/" + gameId);
 
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("gameState")) {
             return (String) responseMap.get("gameState");
         } else {
-            throw new Exception("Observe game failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return null;
         }
     }
 }
