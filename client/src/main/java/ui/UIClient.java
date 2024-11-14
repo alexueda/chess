@@ -1,14 +1,16 @@
 package ui;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Scanner;
+
+import model.GameData;
 import service.ServerFacade;
 
 public class UIClient {
     private final ServerFacade server;
     private boolean loggedIn = false;
     private String username;
-    private Map<Integer, String> gameMap; // Store game IDs and names
+    private List<GameData> games; // Store game IDs and names
 
     public UIClient(ServerFacade server) {
         this.server = server;
@@ -112,17 +114,22 @@ public class UIClient {
                 }
                 break;
             case "list":
-                gameMap = server.listGames();
-                gameMap.forEach((id, name) -> System.out.println("Game ID: " + id + ", Game Name: " + name));
+                games = server.listGames();
+                for (int i = 0; i < games.size(); i++) {
+                    System.out.println( i+1 + " " + games.get(i).gameName());
+                }
                 break;
             case "join":
                 if (parts.length < 3) {
                     System.out.println("Usage: join <GAME_ID> <WHITE|BLACK>");
                 } else {
-                    int gameId = Integer.parseInt(parts[1]);
+                    int index = Integer.parseInt(parts[1]) - 1;
                     String color = parts[2].toUpperCase();
-                    if (server.joinGame(gameId, color)) {
-                        System.out.println("Joined game " + gameId + " as " + color);
+                    if (games == null) {
+                        games = server.listGames();
+                    }
+                    if (server.joinGame(games.get(index).gameID(), color)) {
+                        System.out.println("Joined game " + index + " as " + color);
                     } else {
                         System.out.println("Failed to join game. Please check if the game ID or color is valid, or if the color is already taken.");
                     }
@@ -132,10 +139,10 @@ public class UIClient {
                 if (parts.length < 2) {
                     System.out.println("Usage: observe <GAME_ID>");
                 } else {
-                    int gameId = Integer.parseInt(parts[1]);
-                    String gameState = server.observeGame(gameId);
+                    int index= Integer.parseInt(parts[1])- 1;
+                    new UIBoard();
                     if (gameState != null) {
-                        System.out.println("Observing game " + gameId + ": " + gameState);
+                        System.out.println("Observing game " + index + ": " + gameState);
                     } else {
                         System.out.println("Failed to observe game.");
                     }

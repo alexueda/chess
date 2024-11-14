@@ -3,7 +3,8 @@ import ui.UIClient;
 
 public class Main {
     public static void main(String[] args) {
-        ServerFacade serverFacade = new ServerFacade();
+        String baseUrl = "http://localhost:8080";
+        ServerFacade serverFacade = new ServerFacade(baseUrl);
         UIClient client = new UIClient(serverFacade);
         client.start();
     }

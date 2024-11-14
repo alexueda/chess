@@ -4,8 +4,12 @@ import java.io.*;
 import java.net.*;
 
 public class ClientCommunicator {
-    private static final String BASE_URL = "http://localhost:8080";
+    private final String baseUrl;
     private String authToken = null;
+
+    public ClientCommunicator(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
@@ -38,24 +42,16 @@ public class ClientCommunicator {
     }
 
     private HttpURLConnection createConnection(String endpoint, String method) throws IOException {
-        URL url = new URL(BASE_URL + endpoint);
+        URL url = new URL(baseUrl + endpoint);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod(method);
         conn.setRequestProperty("Content-Type", "application/json");
         if (authToken != null) {
-            // Experiment with different formats if "Bearer" is unexpected
             conn.setRequestProperty("Authorization", authToken);
-            // OR try with "Bearer " if it's required by the server
-            // conn.setRequestProperty("Authorization", "Bearer " + authToken);
         }
         conn.setDoOutput("POST".equals(method) || "PUT".equals(method));
         return conn;
     }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
 
     private void writePayload(HttpURLConnection conn, String payload) throws IOException {
         try (OutputStream os = conn.getOutputStream()) {
@@ -75,11 +71,9 @@ public class ClientCommunicator {
                 response.append(line);
             }
         }
-
         if (responseCode < 200 || responseCode >= 300) {
             throw new IOException("HTTP error code: " + responseCode + " - " + response.toString());
         }
-
         return response.toString();
     }
 }
