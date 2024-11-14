@@ -1,11 +1,11 @@
 package service;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import dataaccess.ClientCommunicator;
 import model.GameData;
 import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ServerFacade {
     private final ClientCommunicator communicator;
@@ -18,11 +18,9 @@ public class ServerFacade {
     public boolean login(String username, String password) throws Exception {
         Map<String, String> credentials = Map.of("username", username, "password", password);
         String response = communicator.sendPostRequest("/session", gson.toJson(credentials));
-
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("authToken")) {
             communicator.setAuthToken((String) responseMap.get("authToken"));
-            System.out.println("Auth token set: " + responseMap.get("authToken"));
             return true;
         } else {
             System.out.println("Error: " + responseMap.get("message"));
@@ -33,11 +31,9 @@ public class ServerFacade {
     public boolean register(String username, String password, String email) throws Exception {
         Map<String, String> credentials = Map.of("username", username, "password", password, "email", email);
         String response = communicator.sendPostRequest("/user", gson.toJson(credentials));
-
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("authToken")) {
             communicator.setAuthToken((String) responseMap.get("authToken"));
-            System.out.println("Auth token set: " + responseMap.get("authToken"));
             return true;
         } else {
             System.out.println("Error: " + responseMap.get("message"));
@@ -47,11 +43,9 @@ public class ServerFacade {
 
     public boolean logout() throws Exception {
         String response = communicator.sendDeleteRequest("/session");
-
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("message") && "Successfully logged out".equals(responseMap.get("message"))) {
+        if (responseMap.containsKey("message") && responseMap.get("message").equals("Successfully logged out")) {
             communicator.clearAuthToken();
-            System.out.println("Logged out successfully.");
             return true;
         } else {
             System.out.println("Error: " + responseMap.get("message"));
@@ -60,50 +54,42 @@ public class ServerFacade {
     }
 
     public boolean createGame(String gameName) throws Exception {
-        Map<String, String> gameData = Map.of("gameName", gameName, "gameID", gameName); // Set gameID and gameName to be the same
+        Map<String, String> gameData = Map.of("gameName", gameName, "gameID", gameName);
         String response = communicator.sendPostRequest("/game", gson.toJson(gameData));
 
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("gameID")) {
-            System.out.println("Game created with ID: " + responseMap.get("gameID"));
-            return true;
-        } else {
-            System.out.println("Error: " + responseMap.get("message"));
-            return false;
-        }
+        return responseMap.containsKey("gameID");
     }
 
-    public List<GameData> listGames() throws Exception {
+    public Map<Integer, String> listGames() throws Exception {
         String response = communicator.sendGetRequest("/game");
 
-        // Parse the "games" list from the response JSON
-        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("games")) {
-            Type gameListType = new TypeToken<List<GameData>>() {}.getType();
-            return gson.fromJson(gson.toJson(responseMap.get("games")), gameListType);
-        } else {
-            System.out.println("Error: " + responseMap.get("message"));
-            return null;
+        // Parse the response as a map with a "games" key containing the list of games
+        Type responseType = new TypeToken<Map<String, List<GameData>>>(){}.getType();
+        Map<String, List<GameData>> responseMap = gson.fromJson(response, responseType);
+
+        // Extract the list of games from the response map
+        List<GameData> games = responseMap.get("games");
+
+        // Create a map to store game ID and game name pairs
+        Map<Integer, String> gameMap = new HashMap<>();
+        for (GameData game : games) {
+            gameMap.put(game.gameID(), game.gameName());
         }
+        return gameMap;
     }
 
-    public boolean joinGame(String gameId, String color) throws Exception {
-        Map<String, Object> gameData = Map.of("gameID", gameId, "playerColor", color);
+    public boolean joinGame(int gameId, String color) throws Exception {
+        Map<String, Object> gameData = new HashMap<>();
+        gameData.put("gameID", gameId);
+        gameData.put("playerColor", color);
         String response = communicator.sendPutRequest("/game", gson.toJson(gameData));
-
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("success") && (Boolean) responseMap.get("success")) {
-            System.out.println("Joined game successfully.");
-            return true;
-        } else {
-            System.out.println("Error: " + responseMap.get("message"));
-            return false;
-        }
+        return responseMap.containsKey("success") && (Boolean) responseMap.get("success");
     }
 
-    public String observeGame(String gameId) throws Exception {
+    public String observeGame(int gameId) throws Exception {
         String response = communicator.sendGetRequest("/game/observe/" + gameId);
-
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("gameState")) {
             return (String) responseMap.get("gameState");

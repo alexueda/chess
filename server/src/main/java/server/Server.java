@@ -17,7 +17,7 @@ public class Server {
         Spark.staticFiles.location("web");
 
         UserDAO userDAO = new SQLUserDAO();  // Use SQLUserDAO implementation
-        AuthDAO authDAO = new SQLAuthDAO();  // Use SQLAuthDAO implementation
+        AuthDAO authDAO = new SQLAuthDAO();  // Use SQLAuthDAO implementationA
         GameDAO gameDAO = new SQLGameDAO();  // Use SQLGameDAO implementation
 
         // Register your endpoints and handle exceptions here.

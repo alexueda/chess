@@ -1,5 +1,6 @@
 package ui;
 
+import java.util.Map;
 import java.util.Scanner;
 import service.ServerFacade;
 
@@ -7,6 +8,7 @@ public class UIClient {
     private final ServerFacade server;
     private boolean loggedIn = false;
     private String username;
+    private Map<Integer, String> gameMap; // Store game IDs and names
 
     public UIClient(ServerFacade server) {
         this.server = server;
@@ -22,9 +24,9 @@ public class UIClient {
             String command = parts[0].toLowerCase();
             try {
                 if (!loggedIn) {
-                    handlePreLogin(command, parts);  // Ensure this method exists
+                    handlePreLogin(command, parts);
                 } else {
-                    handlePostLogin(command, parts); // Ensure this method exists
+                    handlePostLogin(command, parts);
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
@@ -52,7 +54,7 @@ public class UIClient {
                         this.username = user;
                         System.out.println("Logged in as " + user);
                     } else {
-                        System.out.println("Login failed.");
+                        System.out.println("Failed to login.");
                     }
                 }
                 break;
@@ -66,9 +68,9 @@ public class UIClient {
                     if (server.register(user, pass, email)) {
                         loggedIn = true;
                         this.username = user;
-                        System.out.println("Registered and logged in as " + user);
+                        System.out.println("Logged in as " + user);
                     } else {
-                        System.out.println("Registration failed.");
+                        System.out.println("Failed to register.");
                     }
                 }
                 break;
@@ -92,9 +94,9 @@ public class UIClient {
             case "logout":
                 if (server.logout()) {
                     loggedIn = false;
-                    System.out.println("Logged out.");
+                    System.out.println("Logged out successfully.");
                 } else {
-                    System.out.println("Logout failed.");
+                    System.out.println("Failed to logout.");
                 }
                 break;
             case "create":
@@ -110,20 +112,19 @@ public class UIClient {
                 }
                 break;
             case "list":
-                server.listGames().forEach(gameData ->
-                        System.out.println("Game ID: " + gameData.gameID() + ", Game Name: " + gameData.gameName())
-                );
+                gameMap = server.listGames();
+                gameMap.forEach((id, name) -> System.out.println("Game ID: " + id + ", Game Name: " + name));
                 break;
             case "join":
                 if (parts.length < 3) {
                     System.out.println("Usage: join <GAME_ID> <WHITE|BLACK>");
                 } else {
-                    String gameId = parts[1];
+                    int gameId = Integer.parseInt(parts[1]);
                     String color = parts[2].toUpperCase();
                     if (server.joinGame(gameId, color)) {
                         System.out.println("Joined game " + gameId + " as " + color);
                     } else {
-                        System.out.println("Failed to join game.");
+                        System.out.println("Failed to join game. Please check if the game ID or color is valid, or if the color is already taken.");
                     }
                 }
                 break;
@@ -131,7 +132,7 @@ public class UIClient {
                 if (parts.length < 2) {
                     System.out.println("Usage: observe <GAME_ID>");
                 } else {
-                    String gameId = parts[1];
+                    int gameId = Integer.parseInt(parts[1]);
                     String gameState = server.observeGame(gameId);
                     if (gameState != null) {
                         System.out.println("Observing game " + gameId + ": " + gameState);
