@@ -13,7 +13,7 @@ public class ServerFacade {
     private final ClientCommunicator communicator;
     private final Gson gson = new Gson();
 
-    public ServerFacade(String baseUrl) {  // Accept base URL for test configuration
+    public ServerFacade(String baseUrl) {
         this.communicator = new ClientCommunicator(baseUrl);
     }
 

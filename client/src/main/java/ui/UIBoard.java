@@ -25,7 +25,6 @@ public class UIBoard {
         out.print(ERASE_SCREEN);
         out.print("   ");
 
-        // Column labels based on perspective
         if (whiteBottom) {
             for (char col = 'a'; col <= 'h'; col++) {
                 out.print(SET_TEXT_COLOR_WHITE + " " + col + " " + RESET_TEXT_COLOR);
@@ -37,12 +36,10 @@ public class UIBoard {
         }
         out.println();
 
-        // Define row traversal direction based on perspective
         int startRow = whiteBottom ? 8 : 1;
         int endRow = whiteBottom ? 1 : 8;
         int rowIncrement = whiteBottom ? -1 : 1;
 
-        // Traverse each row
         for (int row = startRow; row != endRow + rowIncrement; row += rowIncrement) {
             out.print(SET_TEXT_COLOR_WHITE + " " + row + " " + RESET_TEXT_COLOR);
 
@@ -59,7 +56,6 @@ public class UIBoard {
             out.println();
         }
 
-        // Reprint column labels at the bottom
         out.print("   ");
         if (whiteBottom) {
             for (char col = 'a'; col <= 'h'; col++) {
@@ -89,7 +85,6 @@ public class UIBoard {
             default -> symbol = " ";
         }
 
-        // Adjust piece color based on perspective
         String color = (piece.getTeamColor() == ChessGame.TeamColor.WHITE)
                 ? SET_TEXT_COLOR_BLUE
                 : SET_TEXT_COLOR_RED;

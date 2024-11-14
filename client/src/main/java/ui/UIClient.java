@@ -155,7 +155,6 @@ public class UIClient {
             if (index >= 0 && index < games.size() && server.joinGame(games.get(index).gameID(), color)) {
                 System.out.println("Joined game " + (index + 1) + " as " + color);
 
-                // Initialize and display the board according to the player’s color
                 ChessBoard initialBoard = new ChessBoard();
                 initialBoard.resetBoard();
                 UIBoard uiBoard = new UIBoard(initialBoard);
