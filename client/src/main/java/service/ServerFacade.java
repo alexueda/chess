@@ -8,7 +8,7 @@ public class ServerFacade {
     private final Gson gson = new Gson();
 
     public ServerFacade() {
-        this.communicator = new ClientCommunicator();
+        this.communicator = new ClientCommunicator(); // No need to pass baseUrl
     }
 
     public boolean login(String username, String password) throws Exception {
@@ -20,7 +20,8 @@ public class ServerFacade {
             communicator.setAuthToken((String) responseMap.get("authToken"));
             return true;
         } else {
-            throw new Exception("Login failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
         }
     }
 
@@ -33,7 +34,8 @@ public class ServerFacade {
             communicator.setAuthToken((String) responseMap.get("authToken"));
             return true;
         } else {
-            throw new Exception("Registration failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
         }
     }
 
@@ -41,11 +43,12 @@ public class ServerFacade {
         String response = communicator.sendDeleteRequest("/session");
 
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("success") && (Boolean) responseMap.get("success")) {
+        if (responseMap.containsKey("message") && responseMap.get("message").equals("Successfully logged out")) {
             communicator.clearAuthToken();
             return true;
         } else {
-            throw new Exception("Logout failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
         }
     }
 
@@ -57,14 +60,14 @@ public class ServerFacade {
         if (responseMap.containsKey("gameID")) {
             return ((Double) responseMap.get("gameID")).intValue();
         } else {
-            throw new Exception("Create game failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return null;
         }
     }
 
     public Map<Integer, String> listGames() throws Exception {
         String response = communicator.sendGetRequest("/game");
-        Map<Integer, String> games = gson.fromJson(response, Map.class);
-        return games;
+        return gson.fromJson(response, Map.class);
     }
 
     public boolean joinGame(int gameId, String color) throws Exception {
@@ -75,7 +78,8 @@ public class ServerFacade {
         if (responseMap.containsKey("success") && (Boolean) responseMap.get("success")) {
             return true;
         } else {
-            throw new Exception("Join game failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return false;
         }
     }
 
@@ -86,7 +90,8 @@ public class ServerFacade {
         if (responseMap.containsKey("gameState")) {
             return (String) responseMap.get("gameState");
         } else {
-            throw new Exception("Observe game failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            System.out.println("Error: " + responseMap.get("message"));
+            return null;
         }
     }
 }
