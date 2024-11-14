@@ -24,6 +24,8 @@ public class UIBoard {
         PrintStream out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
         out.print(ERASE_SCREEN);
         out.print("   ");
+
+        // Column labels based on perspective
         if (whiteBottom) {
             for (char col = 'a'; col <= 'h'; col++) {
                 out.print(SET_TEXT_COLOR_WHITE + " " + col + " " + RESET_TEXT_COLOR);
@@ -34,23 +36,30 @@ public class UIBoard {
             }
         }
         out.println();
+
+        // Define row traversal direction based on perspective
         int startRow = whiteBottom ? 8 : 1;
         int endRow = whiteBottom ? 1 : 8;
         int rowIncrement = whiteBottom ? -1 : 1;
+
+        // Traverse each row
         for (int row = startRow; row != endRow + rowIncrement; row += rowIncrement) {
             out.print(SET_TEXT_COLOR_WHITE + " " + row + " " + RESET_TEXT_COLOR);
+
             for (int col = 1; col <= 8; col++) {
                 int actualCol = whiteBottom ? col : 9 - col;  // Reverse columns for Black's perspective
                 ChessPiece piece = chessBoard.getPiece(new ChessPosition(row, actualCol));
                 String pieceSymbol = getPieceSymbol(piece, whiteBottom);
-                boolean isLightSquare = (row + col) % 2 == 1;
+                boolean isLightSquare = (row + actualCol) % 2 == 1;
                 String bgColor = isLightSquare ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_DARK_GREY;
                 out.print(bgColor + " " + pieceSymbol + " " + RESET_BG_COLOR);
             }
+
             out.print(SET_TEXT_COLOR_WHITE + " " + row + RESET_TEXT_COLOR);
             out.println();
         }
 
+        // Reprint column labels at the bottom
         out.print("   ");
         if (whiteBottom) {
             for (char col = 'a'; col <= 'h'; col++) {
@@ -79,12 +88,11 @@ public class UIBoard {
             case PAWN -> symbol = "P";
             default -> symbol = " ";
         }
-        String color;
-        if (whiteBottom) {
-            color = piece.getTeamColor() == ChessGame.TeamColor.WHITE ? SET_TEXT_COLOR_BLUE : SET_TEXT_COLOR_RED;
-        } else {
-            color = piece.getTeamColor() == ChessGame.TeamColor.WHITE ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE;
-        }
+
+        // Adjust piece color based on perspective
+        String color = piece.getTeamColor() == ChessGame.TeamColor.WHITE
+                ? (whiteBottom ? SET_TEXT_COLOR_BLUE : SET_TEXT_COLOR_RED)
+                : (whiteBottom ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE);
 
         return color + symbol + RESET_TEXT_COLOR;
     }
