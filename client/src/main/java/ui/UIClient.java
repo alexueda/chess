@@ -154,6 +154,19 @@ public class UIClient {
 
             if (index >= 0 && index < games.size() && server.joinGame(games.get(index).gameID(), color)) {
                 System.out.println("Joined game " + (index + 1) + " as " + color);
+
+                // Initialize and display the board according to the player’s color
+                ChessBoard initialBoard = new ChessBoard();
+                initialBoard.resetBoard();
+                UIBoard uiBoard = new UIBoard(initialBoard);
+
+                if (color.equals("WHITE")) {
+                    System.out.println("Displaying board with White at bottom:");
+                    uiBoard.printBoardWhiteBottom();
+                } else if (color.equals("BLACK")) {
+                    System.out.println("Displaying board with Black at bottom:");
+                    uiBoard.printBoardBlackBottom();
+                }
             } else {
                 System.out.println("Failed to join game. Please check if the game ID or color is valid, or if the color is already taken.");
             }
