@@ -90,9 +90,9 @@ public class UIBoard {
         }
 
         // Adjust piece color based on perspective
-        String color = piece.getTeamColor() == ChessGame.TeamColor.WHITE
-                ? (whiteBottom ? SET_TEXT_COLOR_BLUE : SET_TEXT_COLOR_RED)
-                : (whiteBottom ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE);
+        String color = (piece.getTeamColor() == ChessGame.TeamColor.WHITE)
+                ? SET_TEXT_COLOR_BLUE
+                : SET_TEXT_COLOR_RED;
 
         return color + symbol + RESET_TEXT_COLOR;
     }
