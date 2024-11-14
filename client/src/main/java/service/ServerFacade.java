@@ -95,4 +95,14 @@ public class ServerFacade {
             return null;
         }
     }
+
+    public boolean clearDatabase() throws Exception {
+        String response = communicator.sendDeleteRequest("/db");
+        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
+        return responseMap != null && responseMap.isEmpty(); // Expecting an empty JSON response on success
+    }
+
+    public void clearAuthToken() {
+        communicator.clearAuthToken();
+    }
 }

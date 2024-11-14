@@ -19,27 +19,21 @@ public class ServerFacadeTests {
         server = new Server();
         var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
-
-        // Initialize the ServerFacade with the correct base URL for the server
         serverFacade = new ServerFacade("http://localhost:" + port);
     }
 
     @AfterAll
-    static void stopServer() {
-        server.stop();
-    }
-
-    @BeforeEach
-    public void cleanup() {
+    public static void stopServer() {
         try {
-            // Attempt to logout if still logged in after each test
-            serverFacade.logout();
-        } catch (Exception ignored) {
-            // Ignore any exceptions, as some tests may leave us in a non-logged-in state
+            boolean cleared = serverFacade.clearDatabase();
+            assertTrue(cleared, "Database clearing failed after all tests.");
+        } catch (Exception e) {
+            fail("Exception during database clearing after all tests: " + e.getMessage());
+        } finally {
+            server.stop();
         }
     }
 
-    // Login tests
     @Test
     public void testLoginSuccess() {
         String uniqueUsername = "testUser" + System.currentTimeMillis();
@@ -70,7 +64,6 @@ public class ServerFacadeTests {
         }
     }
 
-    // Registration tests
     @Test
     public void testRegisterSuccess() {
         String uniqueUsername = "newUser" + System.currentTimeMillis();
@@ -108,7 +101,6 @@ public class ServerFacadeTests {
         }
     }
 
-    // Logout tests
     @Test
     public void testLogoutSuccess() {
         String username = "testUser_" + System.currentTimeMillis();
@@ -139,7 +131,6 @@ public class ServerFacadeTests {
         }
     }
 
-    // Game creation tests
     @Test
     public void testCreateGameSuccess() {
         String username = "gameCreator_" + System.currentTimeMillis();
@@ -172,7 +163,6 @@ public class ServerFacadeTests {
         }
     }
 
-    // Game listing tests
     @Test
     public void testListGamesSuccess() {
         String username = "gameLister_" + System.currentTimeMillis();
@@ -193,13 +183,15 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testListGamesFailureWithoutLogin() throws Exception {
-        // Attempt to list games without logging in
-        List<GameData> games = serverFacade.listGames();
-
-        // Check if the list is empty, indicating the operation failed due to lack of login
-        assertTrue(games.isEmpty(), "Game list should be empty when attempting to list games without logging in.");
+    public void testListGamesFailureWithoutLogin() {
+        serverFacade.clearAuthToken();
+        Exception exception = assertThrows(Exception.class, () -> {
+            serverFacade.listGames();
+        });
+        assertTrue(exception.getMessage().contains("Unauthorized") || exception.getMessage().contains("403"),
+                "Expected an authorization error when listing games without logging in.");
     }
+
 
 
     @Test
@@ -209,64 +201,46 @@ public class ServerFacadeTests {
         String gameName = "joinTestGame_" + System.currentTimeMillis();
 
         try {
-            // Register and log in the user
             serverFacade.register(username, password, "test@example.com");
             serverFacade.login(username, password);
-
-            // Create a new game
             boolean gameCreated = serverFacade.createGame(gameName);
             assertTrue(gameCreated, "Game creation should succeed.");
-
-            // Retrieve the game list to get the newly created game's ID
             List<GameData> games = serverFacade.listGames();
             int gameId = -1;
             for (GameData game : games) {
                 if (game.gameName().equals(gameName)) {
-                    gameId = game.gameID();  // Use game.gameID() to get the game ID
+                    gameId = game.gameID();
                     break;
                 }
             }
             assertNotEquals(-1, gameId, "Game ID should be valid for the newly created game.");
-
-            // Attempt to join the game as "WHITE" or "BLACK" based on availability
             boolean joinedGame = false;
             try {
                 joinedGame = serverFacade.joinGame(gameId, "WHITE");
             } catch (Exception e) {
                 if (e.getMessage().contains("already taken")) {
-                    // If "WHITE" is taken, try "BLACK"
                     joinedGame = serverFacade.joinGame(gameId, "BLACK");
                 } else {
                     throw e;
                 }
             }
-
             assertTrue(joinedGame, "Joining game should succeed with an available color.");
-
-            // Logout after the test
             serverFacade.logout();
         } catch (Exception e) {
             fail("Exception during join game success test: " + e.getMessage());
         }
     }
 
-
-
-
-
     @Test
     public void testJoinGameFailureWithInvalidID() {
         String username = "joinGameFailUser_" + System.currentTimeMillis();
         String password = "password123";
-
         try {
             serverFacade.register(username, password, "test@example.com");
             serverFacade.login(username, password);
-
             int invalidGameId = -1;
             boolean joinedGame = serverFacade.joinGame(invalidGameId, "WHITE");
             assertFalse(joinedGame, "Joining game should fail with invalid game ID.");
-
             serverFacade.logout();
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("Invalid game ID") || e.getMessage().contains("not found"),
