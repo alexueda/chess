@@ -3,6 +3,7 @@ package ui;
 import java.util.List;
 import java.util.Scanner;
 
+import chess.ChessBoard;
 import model.GameData;
 import service.ServerFacade;
 
@@ -142,13 +143,26 @@ public class UIClient {
                 if (parts.length < 2) {
                     System.out.println("Usage: observe <GAME_ID>");
                 } else {
-                    int index= Integer.parseInt(parts[1])- 1;
-                    String gameState = server.observeGame(index);
-                    if (gameState != null) {
-                        System.out.println("Observing game " + index + ": " + gameState);
-                    } else {
-                        System.out.println("Failed to observe game.");
+                    int index = Integer.parseInt(parts[1]) - 1;
+                    if (games == null || index < 0 || index >= games.size()) {
+                        System.out.println("Invalid game ID.");
+                        return;
                     }
+
+                    System.out.println("Observing initial game state:");
+
+                    // Create a new ChessBoard and reset it to the initial position
+                    ChessBoard initialBoard = new ChessBoard();
+                    initialBoard.resetBoard();  // Set up the initial positions for pieces
+
+                    // Create UIBoard and print both perspectives
+                    UIBoard uiBoard = new UIBoard(initialBoard);
+
+                    System.out.println("White at bottom:");
+                    uiBoard.printBoardWhiteBottom();
+
+                    System.out.println("Black at bottom:");
+                    uiBoard.printBoardBlackBottom();
                 }
                 break;
             case "quit":
