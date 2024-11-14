@@ -103,67 +103,16 @@ public class UIClient {
                 }
                 break;
             case "create":
-                if (parts.length < 2) {
-                    System.out.println("Usage: create <GAME_NAME>");
-                } else {
-                    String gameName = parts[1];
-                    if (server.createGame(gameName)) {
-                        System.out.println("Game '" + gameName + "' created.");
-                    } else {
-                        System.out.println("Failed to create game.");
-                    }
-                }
+                handleCreateGame(parts);
                 break;
             case "list":
-                games = server.listGames();
-                for (int i = 0; i < games.size(); i++) {
-                    GameData game = games.get(i);
-                    String whitePlayer = game.whiteUsername() != null ? game.whiteUsername() : "null";
-                    String blackPlayer = game.blackUsername() != null ? game.blackUsername() : "null";
-                    System.out.println((i + 1) + " " + game.gameName() + " WHITE: " + whitePlayer + " BLACK: " + blackPlayer);
-                }
+                handleListGames();
                 break;
             case "join":
-                if (parts.length < 3) {
-                    System.out.println("Usage: join <GAME_ID> <WHITE|BLACK>");
-                } else {
-                    int index = Integer.parseInt(parts[1]) - 1;
-                    String color = parts[2].toUpperCase();
-                    if (games == null) {
-                        games = server.listGames();
-                    }
-                    if (server.joinGame(games.get(index).gameID(), color)) {
-                        System.out.println("Joined game " + index + " as " + color);
-                    } else {
-                        System.out.println("Failed to join game. Please check if the game ID or color is valid, or if the color is already taken.");
-                    }
-                }
+                handleJoinGame(parts);
                 break;
             case "observe":
-                if (parts.length < 2) {
-                    System.out.println("Usage: observe <GAME_ID>");
-                } else {
-                    int index = Integer.parseInt(parts[1]) - 1;
-                    if (games == null || index < 0 || index >= games.size()) {
-                        System.out.println("Invalid game ID.");
-                        return;
-                    }
-
-                    System.out.println("Observing initial game state:");
-
-                    // Create a new ChessBoard and reset it to the initial position
-                    ChessBoard initialBoard = new ChessBoard();
-                    initialBoard.resetBoard();  // Set up the initial positions for pieces
-
-                    // Create UIBoard and print both perspectives
-                    UIBoard uiBoard = new UIBoard(initialBoard);
-
-                    System.out.println("White at bottom:");
-                    uiBoard.printBoardWhiteBottom();
-
-                    System.out.println("Black at bottom:");
-                    uiBoard.printBoardBlackBottom();
-                }
+                handleObserveGame(parts);
                 break;
             case "quit":
                 System.out.println("Exiting Chess Client.");
@@ -171,6 +120,81 @@ public class UIClient {
                 break;
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
+        }
+    }
+
+    private void handleCreateGame(String[] parts) throws Exception {
+        if (parts.length < 2) {
+            System.out.println("Usage: create <GAME_NAME>");
+        } else {
+            String gameName = parts[1];
+            if (server.createGame(gameName)) {
+                System.out.println("Game '" + gameName + "' created.");
+            } else {
+                System.out.println("Failed to create game.");
+            }
+        }
+    }
+
+    private void handleListGames() throws Exception {
+        games = server.listGames();
+        displayGamesList();
+    }
+
+    private void handleJoinGame(String[] parts) throws Exception {
+        if (parts.length < 3) {
+            System.out.println("Usage: join <GAME_ID> <WHITE|BLACK>");
+        } else {
+            int index = Integer.parseInt(parts[1]) - 1;
+            String color = parts[2].toUpperCase();
+
+            if (games == null) {
+                games = server.listGames();
+            }
+
+            if (index >= 0 && index < games.size() && server.joinGame(games.get(index).gameID(), color)) {
+                System.out.println("Joined game " + (index + 1) + " as " + color);
+            } else {
+                System.out.println("Failed to join game. Please check if the game ID or color is valid, or if the color is already taken.");
+            }
+        }
+    }
+
+    private void handleObserveGame(String[] parts) throws Exception {
+        if (parts.length < 2) {
+            System.out.println("Usage: observe <GAME_ID>");
+        } else {
+            if (games == null) {
+                games = server.listGames();
+            }
+
+            int index = Integer.parseInt(parts[1]) - 1;
+            if (index < 0 || index >= games.size()) {
+                System.out.println("Invalid game ID.");
+                return;
+            }
+
+            System.out.println("Observing initial game state:");
+
+            ChessBoard initialBoard = new ChessBoard();
+            initialBoard.resetBoard();
+
+            UIBoard uiBoard = new UIBoard(initialBoard);
+
+            System.out.println("White at bottom:");
+            uiBoard.printBoardWhiteBottom();
+
+            System.out.println("Black at bottom:");
+            uiBoard.printBoardBlackBottom();
+        }
+    }
+
+    private void displayGamesList() {
+        for (int i = 0; i < games.size(); i++) {
+            GameData game = games.get(i);
+            String whitePlayer = game.whiteUsername() != null ? game.whiteUsername() : "null";
+            String blackPlayer = game.blackUsername() != null ? game.blackUsername() : "null";
+            System.out.println((i + 1) + " " + game.gameName() + " WHITE: " + whitePlayer + " BLACK: " + blackPlayer);
         }
     }
 
