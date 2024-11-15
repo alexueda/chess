@@ -85,17 +85,6 @@ public class ServerFacade {
         }
     }
 
-    public String observeGame(int gameId) throws Exception {
-        String response = communicator.sendGetRequest("/game/observe/" + gameId);
-        Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("gameState")) {
-            return (String) responseMap.get("gameState");
-        } else {
-            System.out.println("Error: " + responseMap.get("message"));
-            return null;
-        }
-    }
-
     public boolean clearDatabase() throws Exception {
         String response = communicator.sendDeleteRequest("/db");
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
