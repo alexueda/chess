@@ -32,7 +32,7 @@ public class UIClient {
                     handlePostLogin(command, parts);
                 }
             } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                System.out.println("Error");
             }
         }
     }
@@ -57,7 +57,7 @@ public class UIClient {
                         this.username = user;
                         System.out.println("Logged in as " + user);
                     } else {
-                        System.out.println("Failed to login.");
+                        System.out.println("Failed to login. Try again.");
                     }
                 }
                 break;

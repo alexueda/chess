@@ -26,11 +26,11 @@ public class ServerFacade {
                 communicator.setAuthToken((String) responseMap.get("authToken"));
                 return true;
             } else {
-                System.out.println("Error: " + responseMap.get("message"));
+                System.out.println("Error");
                 return false;
             }
         } catch (IOException e) {
-            System.out.println("Login failed with exception: " + e.getMessage());
+            System.out.println("Login failed");
             return false;
         }
     }
@@ -43,7 +43,7 @@ public class ServerFacade {
             communicator.setAuthToken((String) responseMap.get("authToken"));
             return true;
         } else {
-            System.out.println("Error: " + responseMap.get("message"));
+            System.out.println("Register fail");
             return false;
         }
     }
@@ -55,7 +55,7 @@ public class ServerFacade {
             communicator.clearAuthToken();
             return true;
         } else {
-            System.out.println("Error: " + responseMap.get("message"));
+            System.out.println("Logout fail");
             return false;
         }
     }
@@ -81,7 +81,7 @@ public class ServerFacade {
         if (responseMap.isEmpty()) {
             return true;
         } else {
-            throw new Exception("Join game failed: " + responseMap.getOrDefault("message", "Unknown error"));
+            throw new Exception("Join game failed");
         }
     }
 
