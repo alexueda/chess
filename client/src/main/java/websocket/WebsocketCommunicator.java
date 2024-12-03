@@ -1,7 +1,6 @@
 package websocket;
 
 import com.google.gson.Gson;
-import spark.Session;
 import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessageObserver;
 
@@ -9,6 +8,7 @@ import javax.websocket.*;
 import java.net.URI;
 
 public class WebsocketCommunicator {
+
     private final ServerMessageObserver observer;
     private Session session;
     private final Gson gson = new Gson();
@@ -22,7 +22,7 @@ public class WebsocketCommunicator {
             this.session = container.connectToServer(new Endpoint() {
                 @Override
                 public void onOpen(Session session, EndpointConfig config) {
-                    System.out.println("Connected to WebSocket server.");
+                    System.out.println("WebSocket connection established.");
                 }
 
                 @Override
@@ -36,24 +36,46 @@ public class WebsocketCommunicator {
                 }
             }, uri);
 
-            session.addMessageHandler((MessageHandler.Whole<String>) this::handleMessage);
+            if (this.session == null) {
+                throw new IllegalStateException("Failed to open WebSocket session.");
+            }
+
+            this.session.addMessageHandler((MessageHandler.Whole<String>) this::handleMessage);
         } catch (Exception e) {
+            System.err.println("Failed to connect to WebSocket server: " + e.getMessage());
             throw new Exception("Failed to connect to WebSocket server.", e);
         }
     }
 
     private void handleMessage(String message) {
-        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
-        observer.notify(serverMessage);
+        try {
+            ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+            observer.notify(serverMessage);
+        } catch (Exception e) {
+            System.err.println("Failed to process WebSocket message: " + e.getMessage());
+        }
     }
 
     public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
+        if (session == null || !session.isOpen()) {
+            System.err.println("WebSocket session is not open. Cannot send message.");
+            return;
+        }
+
+        try {
+            session.getAsyncRemote().sendText(message);
+        } catch (Exception e) {
+            System.err.println("Failed to send WebSocket message: " + e.getMessage());
+        }
     }
 
-    public void close() throws Exception {
-        if (session != null) {
-            session.close();
+    public void close() {
+        try {
+            if (session != null && session.isOpen()) {
+                session.close();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to close WebSocket session: " + e.getMessage());
         }
     }
 }

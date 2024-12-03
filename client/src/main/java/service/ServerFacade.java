@@ -25,70 +25,63 @@ public class ServerFacade {
             if (responseMap.containsKey("authToken")) {
                 communicator.setAuthToken((String) responseMap.get("authToken"));
                 return true;
-            } else {
-                System.out.println("Error");
-                return false;
             }
         } catch (IOException e) {
-            System.out.println("Login failed");
-            return false;
+            System.out.println("Login failed: " + e.getMessage());
         }
+        return false;
     }
 
-    public boolean register(String username, String password, String email) throws Exception {
+    public boolean register(String username, String password, String email) throws IOException {
         Map<String, String> credentials = Map.of("username", username, "password", password, "email", email);
         String response = communicator.sendPostRequest("/user", gson.toJson(credentials));
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         if (responseMap.containsKey("authToken")) {
             communicator.setAuthToken((String) responseMap.get("authToken"));
             return true;
-        } else {
-            System.out.println("Register fail");
-            return false;
         }
+        return false;
     }
 
-    public boolean logout() throws Exception {
+    public boolean logout() throws IOException {
         String response = communicator.sendDeleteRequest("/session");
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.containsKey("message") && responseMap.get("message").equals("Successfully logged out")) {
+        if ("Successfully logged out".equals(responseMap.get("message"))) {
             communicator.clearAuthToken();
             return true;
-        } else {
-            System.out.println("Logout fail");
-            return false;
         }
+        return false;
     }
 
-    public boolean createGame(String gameName) throws Exception {
+    public boolean createGame(String gameName) throws IOException {
         Map<String, String> gameData = Map.of("gameName", gameName, "gameID", gameName);
         String response = communicator.sendPostRequest("/game", gson.toJson(gameData));
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
         return responseMap.containsKey("gameID");
     }
 
-    public List<GameData> listGames() throws Exception {
+    public List<GameData> listGames() throws IOException {
         String response = communicator.sendGetRequest("/game");
-        Type responseType = new TypeToken<Map<String, List<GameData>>>(){}.getType();
+        Type responseType = new TypeToken<Map<String, List<GameData>>>() {}.getType();
         Map<String, List<GameData>> responseMap = gson.fromJson(response, responseType);
         return responseMap.get("games");
     }
 
-    public boolean joinGame(int gameId, String color) throws Exception {
+    public boolean joinGame(int gameId, String color) throws IOException {
         Map<String, Object> gameData = Map.of("gameID", gameId, "playerColor", color);
         String response = communicator.sendPutRequest("/game", gson.toJson(gameData));
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        if (responseMap.isEmpty()) {
-            return true;
-        } else {
-            throw new Exception("Join game failed");
-        }
+        return responseMap.isEmpty();
     }
 
-    public boolean clearDatabase() throws Exception {
+    public boolean clearDatabase() throws IOException {
         String response = communicator.sendDeleteRequest("/db");
         Map<String, Object> responseMap = gson.fromJson(response, Map.class);
-        return responseMap != null && responseMap.isEmpty(); // Expecting an empty JSON response on success
+        return responseMap != null && responseMap.isEmpty();
+    }
+
+    public String getAuthToken() {
+        return communicator.getAuthToken();
     }
 
     public void clearAuthToken() {
