@@ -1,6 +1,9 @@
 package ui;
 
 import chess.ChessBoard;
+import chess.ChessPosition;
+import chess.ChessMove;
+import chess.ChessGame;
 import model.GameData;
 import service.ServerFacade;
 import websocket.WebsocketCommunicator;
@@ -15,9 +18,10 @@ public class UIClient implements ServerMessageObserver {
     private WebsocketCommunicator websocket;
     private boolean loggedIn = false;
     private boolean inGame = false;
+    private boolean isObserver = false;
     private String username;
     private List<GameData> games;
-    private ChessBoard chessBoard;
+    private ChessGame chessGame;
 
     public UIClient(ServerFacade server) {
         this.server = server;
@@ -120,7 +124,7 @@ public class UIClient implements ServerMessageObserver {
         if (server.register(user, pass, email)) {
             loggedIn = true;
             this.username = user;
-            System.out.println("Logged in as " + user);
+            System.out.println("Registered and logged in as " + user);
         } else {
             System.out.println("Failed to register.");
         }
@@ -169,10 +173,11 @@ public class UIClient implements ServerMessageObserver {
         if (server.joinGame(games.get(gameIndex).gameID(), color)) {
             System.out.println("Joined game as " + color);
             inGame = true;
+            isObserver = false;
 
-            chessBoard = new ChessBoard();
-            chessBoard.resetBoard();
+            chessGame = new ChessGame();
             openWebsocket();
+            redrawBoard();
         } else {
             System.out.println("Failed to join game.");
         }
@@ -184,59 +189,92 @@ public class UIClient implements ServerMessageObserver {
             return;
         }
 
-        int index = Integer.parseInt(parts[1]) - 1;
+        int gameIndex = Integer.parseInt(parts[1]) - 1;
 
-        if (games == null || index < 0 || index >= games.size()) {
+        if (games == null || gameIndex < 0 || gameIndex >= games.size()) {
             System.out.println("Invalid game ID.");
             return;
         }
 
-        System.out.println("Observing game: " + games.get(index).gameName());
+        System.out.println("Observing game: " + games.get(gameIndex).gameName());
+        inGame = true;
+        isObserver = true;
 
-        chessBoard = new ChessBoard();
-        chessBoard.resetBoard();
-
-        // Display initial board
-        UIBoard uiBoard = new UIBoard(chessBoard);
-        System.out.println("Initial game state:");
-        System.out.println("White at bottom:");
-        uiBoard.printBoardWhiteBottom();
-        System.out.println("Black at bottom:");
-        uiBoard.printBoardBlackBottom();
-
-        // Establish WebSocket connection for observation
+        chessGame = new ChessGame();
         openWebsocket();
-
-        // Notify the server of observation
-        websocket.sendMessage(String.format(
-                "{\"commandType\": \"CONNECT\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
-                server.getAuthToken(), games.get(index).gameID()
-        ));
-
-        System.out.println("You are now observing the game. Use 'redraw' to refresh the board.");
+        redrawBoard();
     }
 
+    private void redrawBoard() {
+        if (chessGame == null) {
+            System.out.println("No game is currently loaded.");
+            return;
+        }
+        UIBoard uiBoard = new UIBoard(chessGame.getBoard());
+        if (isObserver || username.equals(games.get(0).whiteUsername())) {
+            uiBoard.printBoardWhiteBottom();
+        } else {
+            uiBoard.printBoardBlackBottom();
+        }
+    }
+
+    private void handleLeaveGame() {
+        try {
+            websocket.sendMessage(String.format(
+                    "{\"commandType\": \"LEAVE\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
+                    server.getAuthToken(), getCurrentGameID()
+            ));
+            inGame = false;
+            chessGame = null;
+            closeWebsocket();
+            System.out.println("You left the game.");
+        } catch (Exception e) {
+            System.out.println("Failed to leave the game: " + e.getMessage());
+        }
+    }
+
+    private int getCurrentGameID() {
+        return games.stream()
+                .filter(game -> username.equals(game.whiteUsername()) || username.equals(game.blackUsername()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No game is currently active."))
+                .gameID();
+    }
 
     private void handleMakeMove(String[] parts) {
         if (parts.length < 3) {
             System.out.println("Usage: make_move <START> <END>");
             return;
         }
-        String moveMessage = String.format("{\"commandType\": \"MAKE_MOVE\", \"start\": \"%s\", \"end\": \"%s\"}",
-                parts[1], parts[2]);
-        websocket.sendMessage(moveMessage);
+        String start = parts[1];
+        String end = parts[2];
+        websocket.sendMessage(String.format(
+                "{\"commandType\": \"MAKE_MOVE\", \"authToken\": \"%s\", \"gameID\": \"%d\", \"start\": \"%s\", \"end\": \"%s\"}",
+                server.getAuthToken(), getCurrentGameID(), start, end
+        ));
+    }
+
+    private void displayGamesList() {
+        for (int i = 0; i < games.size(); i++) {
+            GameData game = games.get(i);
+            System.out.printf("%d: %s | WHITE: %s | BLACK: %s%n",
+                    i + 1,
+                    game.gameName(),
+                    game.whiteUsername() == null ? "null" : game.whiteUsername(),
+                    game.blackUsername() == null ? "null" : game.blackUsername());
+        }
     }
 
     private void handleResign() {
-        websocket.sendMessage("{\"commandType\": \"RESIGN\"}");
-        System.out.println("You resigned from the game.");
-    }
-
-    private void handleLeaveGame() {
-        websocket.sendMessage("{\"commandType\": \"LEAVE\"}");
-        closeWebsocket();
-        inGame = false;
-        System.out.println("You left the game.");
+        try {
+            websocket.sendMessage(String.format(
+                    "{\"commandType\": \"RESIGN\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
+                    server.getAuthToken(), getCurrentGameID()
+            ));
+            System.out.println("You resigned from the game.");
+        } catch (Exception e) {
+            System.out.println("Failed to resign: " + e.getMessage());
+        }
     }
 
     private void handleHighlightLegalMoves(String[] parts) {
@@ -244,13 +282,19 @@ public class UIClient implements ServerMessageObserver {
             System.out.println("Usage: highlight_moves <PIECE_POSITION>");
             return;
         }
-        String position = parts[1];
-        System.out.printf("Highlighting legal moves for piece at %s.%n", position);
-    }
-
-    private void redrawBoard() {
-        System.out.println("Redrawing the chess board...");
-        // Add the logic to redraw the board using chessBoard.
+        String positionString = parts[1];
+        try {
+            ChessPosition position = new ChessPosition(
+                    Character.getNumericValue(positionString.charAt(1)),
+                    positionString.charAt(0) - 'a' + 1
+            );
+            List<ChessPosition> legalMoves = chessGame.validMoves(position).stream()
+                    .map(ChessMove::getEndPosition).toList();
+            UIBoard uiBoard = new UIBoard(chessGame.getBoard());
+            uiBoard.printBoardWhiteHL(legalMoves);
+        } catch (Exception e) {
+            System.out.println("Failed to highlight legal moves: " + e.getMessage());
+        }
     }
 
     private void openWebsocket() {
@@ -271,17 +315,6 @@ public class UIClient implements ServerMessageObserver {
         }
     }
 
-    private void displayGamesList() {
-        for (int i = 0; i < games.size(); i++) {
-            GameData game = games.get(i);
-            System.out.printf("%d: %s | WHITE: %s | BLACK: %s%n",
-                    i + 1,
-                    game.gameName(),
-                    game.whiteUsername() == null ? "null" : game.whiteUsername(),
-                    game.blackUsername() == null ? "null" : game.blackUsername());
-        }
-    }
-
     private void showPreLoginHelp() {
         System.out.println("Commands:");
         System.out.println("  register <USERNAME> <PASSWORD> <EMAIL> - create an account");
@@ -295,6 +328,7 @@ public class UIClient implements ServerMessageObserver {
         System.out.println("  create <GAME_NAME> - create a new game");
         System.out.println("  list - list all games");
         System.out.println("  join <GAME_ID> <WHITE|BLACK> - join a game");
+        System.out.println("  observe <GAME_ID> - observe a game");
         System.out.println("  logout - log out of your account");
         System.out.println("  quit - exit the program");
     }
@@ -303,9 +337,9 @@ public class UIClient implements ServerMessageObserver {
         System.out.println("Commands:");
         System.out.println("  make_move <START> <END> - make a move");
         System.out.println("  redraw - redraw the chess board");
-        System.out.println("  highlight_moves <PIECE_POSITION> - highlight legal moves for a piece");
-        System.out.println("  resign - resign the game");
         System.out.println("  leave - leave the game");
+        System.out.println("  resign - resign the game");
+        System.out.println("  highlight_moves <PIECE_POSITION> - highlight legal moves for a piece");
         System.out.println("  help - see available commands");
     }
 
@@ -313,7 +347,10 @@ public class UIClient implements ServerMessageObserver {
     public void notify(ServerMessage message) {
         switch (message.getServerMessageType()) {
             case NOTIFICATION -> System.out.println("Notification: " + message.getMessage());
-            case LOAD_GAME -> System.out.println("Game updated: " + message.getGame());
+            case LOAD_GAME -> {
+                chessGame.getBoard().resetBoard(); // Update game state
+                redrawBoard();
+            }
             case ERROR -> System.out.println("Error: " + message.getMessage());
         }
     }
