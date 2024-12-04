@@ -1,81 +1,88 @@
 package server;
 
 import com.google.gson.Gson;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@ServerEndpoint("/ws")
+@WebSocket
 public class WebSocketServerEndpoint {
 
     private static final Map<Session, String> activeSessions = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
 
-    @OnOpen
+    @OnWebSocketConnect
     public void onOpen(Session session) {
-        System.out.println("Client connected: " + session.getId());
-        activeSessions.put(session, null); // Store session without authentication token for now
+        //System.out.println("WebSocket connection established: " + session.getId());
+        activeSessions.put(session, ""); // Initially no auth token
     }
 
-    @OnMessage
-    public void onMessage(String message, Session session) {
+    @OnWebSocketMessage
+    public void onMessage(Session session, String message) {
         try {
             UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
 
             switch (command.getCommandType()) {
-                case CONNECT -> handleConnect(command, session);
-                case MAKE_MOVE -> handleMakeMove(command, session);
+                case CONNECT -> handleConnect(session, command);
+                case MAKE_MOVE -> handleMakeMove(session, command);
                 case LEAVE -> handleLeave(session);
                 case RESIGN -> handleResign(session);
-                default -> System.err.println("Unknown command type: " + command.getCommandType());
+                default -> sendErrorMessage(session, "Unknown command type: " + command.getCommandType());
             }
         } catch (Exception e) {
             System.err.println("Error processing WebSocket message: " + e.getMessage());
-            sendErrorMessage(session, "Invalid WebSocket message format.");
+            sendErrorMessage(session, "Invalid WebSocket message.");
         }
     }
 
-    private void handleConnect(UserGameCommand command, Session session) {
+    @OnWebSocketClose
+    public void onClose(Session session, int statusCode, String reason) {
+        activeSessions.remove(session);
+        //System.out.println("WebSocket connection closed: " + session.getId() + ". Reason: " + reason.getReasonPhrase());
+    }
+
+//        @OnWebSocketError
+//        public void onError(Session session, Throwable throwable) {
+//            //System.err.println("WebSocket error for session " + session.getId() + ": " + throwable.getMessage());
+//        }
+
+    private void handleConnect(Session session, UserGameCommand command) {
         if (command.getAuthToken() == null) {
             sendErrorMessage(session, "AuthToken is required to connect.");
             return;
         }
-
         activeSessions.put(session, command.getAuthToken());
         System.out.println("User connected: " + command.getAuthToken());
-        broadcastNotification("User connected to game: " + command.getAuthToken());
+        broadcastNotification("User connected to the game: " + command.getAuthToken());
     }
 
-    private void handleMakeMove(UserGameCommand command, Session session) {
+    private void handleMakeMove(Session session, UserGameCommand command) {
         if (!isAuthenticated(session)) {
             sendErrorMessage(session, "Unauthorized action. Please connect first.");
             return;
         }
-
-        System.out.println("Processing move for game ID: " + command.getGameID());
+        System.out.println("Move made for game ID: " + command.getGameID());
         broadcastNotification("Player made a move.");
     }
 
     private void handleLeave(Session session) {
         String userToken = activeSessions.remove(session);
         System.out.println("User left: " + userToken);
-        broadcastNotification("User has left the game: " + userToken);
+        broadcastNotification("User left: " + userToken);
     }
 
     private void handleResign(Session session) {
         String userToken = activeSessions.get(session);
         System.out.println("User resigned: " + userToken);
-        broadcastNotification("User has resigned from the game: " + userToken);
+        broadcastNotification("User resigned: " + userToken);
     }
 
     private void broadcastNotification(String message) {
-        ServerMessage notification = new ServerMessage();
-        notification.setServerMessageType(ServerMessage.ServerMessageType.NOTIFICATION);
-        notification.setMessage(message);
+        ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
         broadcast(gson.toJson(notification));
     }
 
@@ -83,20 +90,18 @@ public class WebSocketServerEndpoint {
         activeSessions.keySet().forEach(session -> {
             try {
                 if (session.isOpen()) {
-                    session.getBasicRemote().sendText(message);
+                    session.getRemote().sendString(message);
                 }
             } catch (Exception e) {
-                System.err.println("Failed to send WebSocket message: " + e.getMessage());
+                System.err.println("Failed to broadcast message: " + e.getMessage());
             }
         });
     }
 
     private void sendErrorMessage(Session session, String errorMessage) {
         try {
-            ServerMessage error = new ServerMessage();
-            error.setServerMessageType(ServerMessage.ServerMessageType.ERROR);
-            error.setMessage(errorMessage);
-            session.getBasicRemote().sendText(gson.toJson(error));
+            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage);
+            session.getRemote().sendString(gson.toJson(error));
         } catch (Exception e) {
             System.err.println("Failed to send error message: " + e.getMessage());
         }
@@ -104,16 +109,5 @@ public class WebSocketServerEndpoint {
 
     private boolean isAuthenticated(Session session) {
         return activeSessions.containsKey(session) && activeSessions.get(session) != null;
-    }
-
-    @OnClose
-    public void onClose(Session session, CloseReason reason) {
-        activeSessions.remove(session);
-        System.out.println("Client disconnected: " + session.getId() + ". Reason: " + reason.getReasonPhrase());
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        System.err.println("WebSocket error for session " + (session != null ? session.getId() : "unknown") + ": " + throwable.getMessage());
     }
 }

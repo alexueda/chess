@@ -22,11 +22,11 @@ public class UIBoard {
         printBoard(false, null);  // Black at the bottom, no highlights
     }
 
-    public void printBoardWhiteBottomWithHighlights(List<ChessPosition> highlights) {
+    public void printBoardWhiteHL(List<ChessPosition> highlights) {
         printBoard(true, highlights);  // White at the bottom, with highlights
     }
 
-    public void printBoardBlackBottomWithHighlights(List<ChessPosition> highlights) {
+    public void printBoardBlackHL(List<ChessPosition> highlights) {
         printBoard(false, highlights);  // Black at the bottom, with highlights
     }
 
