@@ -101,13 +101,10 @@ public class WebSocketServerEndpoint {
                 return;
             }
 
-            // Add client to active session
             activeSessions.put(session, new SessionInfo(authData.authToken(), gameData.gameID()));
 
-            // Send LOAD_GAME to the root client
             sendLoadGame(session, gameData);
 
-            // Send notification to other clients
             broadcastNotification(
                     authData.username() + " joined as " + (authData.username().equals(gameData.whiteUsername()) ? "white" : "black"),
                     gameData.gameID(),
@@ -128,7 +125,6 @@ public class WebSocketServerEndpoint {
 
     private void handleMakeMove(Session session, UserGameCommand command) {
         try {
-            // Validate session and gameID
             SessionInfo sessionInfo = activeSessions.get(session);
             if (sessionInfo == null || !isAuthenticated(session)) {
                 sendErrorMessage(session, "Error: Unauthorized action. Please connect first.");
@@ -140,14 +136,12 @@ public class WebSocketServerEndpoint {
                 return;
             }
 
-            // Validate authToken
             AuthData authData = authDAO.getAuth(command.getAuthToken());
             if (authData == null) {
                 sendErrorMessage(session, "Error: Invalid auth token.");
                 return;
             }
 
-            // Retrieve game data
             GameData gameData = gameDAO.getGame(command.getGameID());
             if (gameData == null) {
                 sendErrorMessage(session, "Error: Game not found.");
@@ -160,10 +154,8 @@ public class WebSocketServerEndpoint {
                 logInfo("Game state was null; initialized a new ChessGame.", session);
             }
 
-            // Deserialize move into ChessMove
             ChessMove move = gson.fromJson(gson.toJson(command.getMove()), ChessMove.class);
 
-            // Check if it is the player's turn
             String currentPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
                     ? gameData.whiteUsername()
                     : gameData.blackUsername();
@@ -172,7 +164,6 @@ public class WebSocketServerEndpoint {
                 return;
             }
 
-            // Validate and apply the move
             try {
                 game.makeMove(move);
             } catch (InvalidMoveException e) {
@@ -180,7 +171,6 @@ public class WebSocketServerEndpoint {
                 return;
             }
 
-            // Update the game state in the database
             gameDAO.updateGame(new GameData(
                     gameData.gameID(),
                     gameData.whiteUsername(),
@@ -189,13 +179,10 @@ public class WebSocketServerEndpoint {
                     game
             ));
 
-            // Broadcast updated game state to all clients
             broadcastLoadGame(command.getGameID());
 
-            // Notify clients about the move
             broadcastNotification("A move was made: " + move.toString(), gameData.gameID(), session);
 
-            // Check for game-over conditions
             if (game.isInCheckmate(game.getTeamTurn())) {
                 broadcastNotification("Game over: Checkmate! " + game.getTeamTurn() + " loses.", gameData.gameID(), null);
             } else if (game.isInStalemate(game.getTeamTurn())) {
@@ -211,30 +198,144 @@ public class WebSocketServerEndpoint {
 
 
     private void handleResign(Session session) {
-        if (!isAuthenticated(session)) {
-            sendErrorMessage(session, "Unauthorized action. Please connect first.");
-            return;
-        }
+        try {
+            if (!isAuthenticated(session)) {
+                sendErrorMessage(session, "Unauthorized action. Please connect first.");
+                return;
+            }
 
-        SessionInfo sessionInfo = activeSessions.get(session);
-        if (sessionInfo != null) {
-            logInfo("User resigned: " + sessionInfo.getAuthToken(), session);
-            broadcastNotification("User resigned: " + sessionInfo.getAuthToken(), sessionInfo.getGameID(), session);
+            // Retrieve session information
+            SessionInfo sessionInfo = activeSessions.get(session);
+            if (sessionInfo == null) {
+                sendErrorMessage(session, "Session is not associated with any game.");
+                return;
+            }
+
+            GameData gameData = gameDAO.getGame(sessionInfo.getGameID());
+            if (gameData == null) {
+                sendErrorMessage(session, "Game not found.");
+                return;
+            }
+
+            ChessGame game = gameData.game();
+            if (game == null) {
+                game = new ChessGame();
+                logInfo("Game state was null; initialized a new ChessGame.", session);
+            }
+
+            if (game.isGameOver()) {
+                sendErrorMessage(session, "Game is already over. Cannot resign.");
+                return;
+            }
+
+            AuthData resigningPlayerAuth = authDAO.getAuth(sessionInfo.getAuthToken());
+            if (resigningPlayerAuth == null) {
+                sendErrorMessage(session, "Invalid authentication token.");
+                return;
+            }
+
+            String resigningUsername = resigningPlayerAuth.username();
+
+            if (!resigningUsername.equals(gameData.whiteUsername()) && !resigningUsername.equals(gameData.blackUsername())) {
+                sendErrorMessage(session, "Observers cannot resign.");
+                return;
+            }
+
+            String losingPlayer = resigningUsername;
+            String winningPlayer = (resigningUsername.equals(gameData.whiteUsername()))
+                    ? gameData.blackUsername()
+                    : gameData.whiteUsername();
+
+            game.setGameOver(true);
+
+            String resignationMessage = losingPlayer + " has resigned. " + winningPlayer + " wins!";
+            broadcastNotification(resignationMessage, gameData.gameID(), null);
+
+            gameDAO.updateGame(new GameData(
+                    gameData.gameID(),
+                    gameData.whiteUsername(),
+                    gameData.blackUsername(),
+                    gameData.gameName(),
+                    game
+            ));
+
+            logInfo("Player resigned: " + resigningUsername, session);
+
+        } catch (Exception e) {
+            logError("Error handling RESIGN command", e, session);
+            sendErrorMessage(session, "An error occurred while processing the resignation.");
         }
     }
+
+
+
 
     private void handleLeave(Session session) {
-        if (!isAuthenticated(session)) {
-            sendErrorMessage(session, "Unauthorized action. Please connect first.");
-            return;
-        }
+        try {
+            if (!isAuthenticated(session)) {
+                sendErrorMessage(session, "Unauthorized action. Please connect first.");
+                return;
+            }
 
-        SessionInfo sessionInfo = activeSessions.remove(session);
-        if (sessionInfo != null) {
-            logInfo("User left: " + sessionInfo.getAuthToken(), session);
-            broadcastNotification("User left: " + sessionInfo.getAuthToken(), sessionInfo.getGameID(), session);
+            SessionInfo sessionInfo = activeSessions.remove(session);
+            if (sessionInfo == null) {
+                sendErrorMessage(session, "Session is not associated with any game.");
+                return;
+            }
+
+            GameData gameData = gameDAO.getGame(sessionInfo.getGameID());
+            if (gameData == null) {
+                sendErrorMessage(session, "Game not found.");
+                return;
+            }
+
+            AuthData leavingPlayerAuth = authDAO.getAuth(sessionInfo.getAuthToken());
+            String leavingUsername = leavingPlayerAuth != null ? leavingPlayerAuth.username() : null;
+
+            boolean isPlayer = false;
+
+            if (leavingUsername != null && leavingUsername.equals(gameData.whiteUsername())) {
+                gameData = new GameData(
+                        gameData.gameID(),
+                        null,
+                        gameData.blackUsername(),
+                        gameData.gameName(),
+                        gameData.game()
+                );
+                isPlayer = true;
+            } else if (leavingUsername != null && leavingUsername.equals(gameData.blackUsername())) {
+                gameData = new GameData(
+                        gameData.gameID(),
+                        gameData.whiteUsername(),
+                        null,
+                        gameData.gameName(),
+                        gameData.game()
+                );
+                isPlayer = true;
+            }
+
+            if (isPlayer) {
+                gameDAO.updateGame(gameData);
+            }
+
+            String notificationMessage = leavingUsername != null
+                    ? leavingUsername + " has left the game."
+                    : "An observer has left the game.";
+
+            broadcastNotification(notificationMessage, gameData.gameID(), session);
+
+            if (isPlayer) {
+                logInfo("User left: " + leavingUsername, session);
+            } else {
+                logInfo("Observer left: " + sessionInfo.getAuthToken(), session);
+            }
+
+        } catch (Exception e) {
+            logError("Error handling LEAVE command", e, session);
+            sendErrorMessage(session, "An error occurred while processing leave.");
         }
     }
+
 
     private boolean isAuthenticated(Session session) {
         SessionInfo sessionInfo = activeSessions.get(session);
@@ -272,7 +373,6 @@ public class WebSocketServerEndpoint {
     }
 
     private boolean validateMove() {
-        // Placeholder for actual move validation logic.
         return true;
     }
 
@@ -282,7 +382,6 @@ public class WebSocketServerEndpoint {
             errorMessage = "Error: An unexpected error occurred.";
         }
 
-        // Use ErrorMessage class to construct the error response
         ErrorMessage error = new ErrorMessage(errorMessage);
 
         sendMessage(session, gson.toJson(error));
