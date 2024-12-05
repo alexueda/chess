@@ -27,11 +27,6 @@ public class WebsocketCommunicator {
                 public void onOpen(Session session, EndpointConfig config) {
                     System.out.println("WebSocket connection established.");
                 }
-
-//                @Override
-//                public void onError(Session session, Throwable throwable) {
-//                    System.err.println("WebSocket error: " + throwable.getMessage());
-//                }
             }, uri);
 
             session.addMessageHandler((MessageHandler.Whole<String>) this::handleMessage);

@@ -1,10 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
-import dataaccess.SQLAuthDAO;
-import dataaccess.SQLGameDAO;
+import dataaccess.*;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
@@ -44,19 +41,18 @@ public class WebSocketServerEndpoint {
 
     @OnWebSocketConnect
     public void onOpen(Session session) {
-        activeSessions.put(session, new SessionInfo("", -1)); // Placeholder for session data
+        activeSessions.put(session, new SessionInfo("", -1));
         System.out.println("WebSocket connection established: " + session.getRemoteAddress());
-        sendNotification(session, "Connection established. Please send a CONNECT command with an authToken.");
     }
 
     @OnWebSocketMessage
     public void onMessage(Session session, String message) {
-        System.out.println("Received message: " + message); // Log incoming message
+        System.out.println("Received message: " + message);
         try {
             UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
 
             if (command == null || command.getCommandType() == null) {
-                sendErrorMessage(session, "Invalid or missing commandType in WebSocket message.");
+                sendErrorMessage(session, "Error: Invalid or missing commandType in WebSocket message.");
                 return;
             }
 
@@ -65,11 +61,11 @@ public class WebSocketServerEndpoint {
                 case MAKE_MOVE -> handleMakeMove(session, command);
                 case RESIGN -> handleResign(session);
                 case LEAVE -> handleLeave(session);
-                default -> sendErrorMessage(session, "Unknown command type: " + command.getCommandType());
+                default -> sendErrorMessage(session, "Error: Unknown command type: " + command.getCommandType());
             }
         } catch (Exception e) {
             System.err.println("Error processing WebSocket message: " + e.getMessage());
-            sendErrorMessage(session, "Invalid WebSocket message format.");
+            sendErrorMessage(session, "Error: Invalid WebSocket message format.");
         }
     }
 
@@ -87,38 +83,37 @@ public class WebSocketServerEndpoint {
 
     private void handleConnect(Session session, UserGameCommand command) {
         try {
-            // Validate authToken
             if (command.getAuthToken() == null || command.getAuthToken().isEmpty()) {
-                sendErrorMessage(session, "AuthToken is required to connect.");
+                sendErrorMessage(session, "Error: AuthToken is required to connect.");
                 return;
             }
 
             AuthData authData = authDAO.getAuth(command.getAuthToken());
             if (authData == null) {
-                sendErrorMessage(session, "Invalid AuthToken.");
+                sendErrorMessage(session, "Error: Invalid AuthToken.");
                 return;
             }
 
             if (command.getGameID() == null) {
-                sendErrorMessage(session, "GameID is required to connect.");
+                sendErrorMessage(session, "Error: GameID is required to connect.");
                 return;
             }
 
             GameData gameData = gameDAO.getGame(command.getGameID());
             if (gameData == null) {
-                sendErrorMessage(session, "Invalid GameID.");
+                sendErrorMessage(session, "Error: Invalid GameID.");
                 return;
             }
 
             activeSessions.put(session, new SessionInfo(authData.authToken(), gameData.gameID()));
             System.out.println("User connected: " + authData.username() + " to game: " + gameData.gameName());
 
-            //sendNotification(session, "Connected to game: " + gameData.gameName());
-            broadcastNotification(authData.username() + " has joined the game.", gameData.gameID());
+            sendLoadGame(session, gameData);
+            broadcastNotification(authData.username() + " has joined the game.", gameData.gameID(), session);
 
         } catch (Exception e) {
             System.err.println("Error in handleConnect: " + e.getMessage());
-            sendErrorMessage(session, "An error occurred during connection.");
+            sendErrorMessage(session, "Error: An error occurred during connection.");
         }
     }
 
@@ -126,22 +121,23 @@ public class WebSocketServerEndpoint {
         SessionInfo sessionInfo = activeSessions.get(session);
 
         if (!isAuthenticated(session)) {
-            sendErrorMessage(session, "Unauthorized action. Please connect first.");
+            sendErrorMessage(session, "Error: Unauthorized action. Please connect first.");
             return;
         }
 
         if (sessionInfo == null || sessionInfo.getGameID() != command.getGameID()) {
-            sendErrorMessage(session, "Invalid GameID.");
+            sendErrorMessage(session, "Error: Invalid GameID.");
             return;
         }
 
-        boolean moveValid = true;
+        boolean moveValid = true; // Assume move validation happens here.
 
         if (moveValid) {
             System.out.println("Valid move made for game ID: " + command.getGameID());
-            broadcastNotification("Player made a move.", command.getGameID());
+            broadcastLoadGame(command.getGameID());
+            broadcastNotification("A player made a move.", command.getGameID(), session);
         } else {
-            sendErrorMessage(session, "Invalid move.");
+            sendErrorMessage(session, "Error: Invalid move.");
         }
     }
 
@@ -149,13 +145,13 @@ public class WebSocketServerEndpoint {
         SessionInfo sessionInfo = activeSessions.remove(session);
 
         if (!isAuthenticated(session)) {
-            sendErrorMessage(session, "Unauthorized action. Please connect first.");
+            sendErrorMessage(session, "Error: Unauthorized action. Please connect first.");
             return;
         }
 
         if (sessionInfo != null) {
             System.out.println("User left: " + sessionInfo.getAuthToken());
-            broadcastNotification("User left: " + sessionInfo.getAuthToken(), sessionInfo.getGameID());
+            broadcastNotification("User left: " + sessionInfo.getAuthToken(), sessionInfo.getGameID(), session);
         }
     }
 
@@ -163,50 +159,57 @@ public class WebSocketServerEndpoint {
         SessionInfo sessionInfo = activeSessions.get(session);
 
         if (!isAuthenticated(session)) {
-            sendErrorMessage(session, "Unauthorized action. Please connect first.");
+            sendErrorMessage(session, "Error: Unauthorized action. Please connect first.");
             return;
         }
 
         if (sessionInfo != null) {
             System.out.println("User resigned: " + sessionInfo.getAuthToken());
-            broadcastNotification("User resigned: " + sessionInfo.getAuthToken(), sessionInfo.getGameID());
+            broadcastNotification("User resigned: " + sessionInfo.getAuthToken(), sessionInfo.getGameID(), session);
         }
     }
 
-    private void broadcastNotification(String message, int gameID) {
-        ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        broadcast(gson.toJson(notification), gameID);
+    private void sendLoadGame(Session session, GameData gameData) {
+        ServerMessage loadGameMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
+        sendMessage(session, gson.toJson(loadGameMessage));
     }
 
-    private void broadcast(String message, int gameID) {
+    private void broadcastLoadGame(int gameID) {
         activeSessions.forEach((session, sessionInfo) -> {
             if (sessionInfo.getGameID() == gameID) {
+                GameData gameData = null;
                 try {
-                    if (session.isOpen()) {
-                        session.getRemote().sendString(message);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Failed to broadcast message: " + e.getMessage());
+                    gameData = gameDAO.getGame(gameID);
+                } catch (DataAccessException e) {
+                    throw new RuntimeException(e);
                 }
+                sendLoadGame(session, gameData);
+            }
+        });
+    }
+
+    private void broadcastNotification(String message, int gameID, Session excludeSession) {
+        ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        String notificationJson = gson.toJson(notification);
+        activeSessions.forEach((session, sessionInfo) -> {
+            if (sessionInfo.getGameID() == gameID && !session.equals(excludeSession)) {
+                sendMessage(session, notificationJson);
             }
         });
     }
 
     private void sendErrorMessage(Session session, String errorMessage) {
-        try {
-            ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage);
-            session.getRemote().sendString(gson.toJson(error));
-        } catch (Exception e) {
-            System.err.println("Failed to send error message: " + e.getMessage());
-        }
+        ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage);
+        sendMessage(session, gson.toJson(error));
     }
 
-    private void sendNotification(Session session, String message) {
+    private void sendMessage(Session session, String message) {
         try {
-            ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            session.getRemote().sendString(gson.toJson(notification));
+            if (session.isOpen()) {
+                session.getRemote().sendString(message);
+            }
         } catch (Exception e) {
-            System.err.println("Failed to send notification: " + e.getMessage());
+            System.err.println("Failed to send message: " + e.getMessage());
         }
     }
 

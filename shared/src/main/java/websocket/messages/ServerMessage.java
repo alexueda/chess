@@ -8,10 +8,9 @@ public class ServerMessage {
     }
 
     private ServerMessageType serverMessageType;
-    private String message; // Optional field for notifications or errors
-    private Object game;    // Optional field for game state in LOAD_GAME
+    private String message;
+    private Object game;
 
-    // Default constructor
     public ServerMessage() {}
 
     // Constructor for messages with only ServerMessageType
@@ -31,7 +30,6 @@ public class ServerMessage {
         this.game = game;
     }
 
-    // Getters
     public ServerMessageType getServerMessageType() {
         return serverMessageType;
     }
@@ -44,7 +42,6 @@ public class ServerMessage {
         return game;
     }
 
-    // Setters
     public void setServerMessageType(ServerMessageType serverMessageType) {
         this.serverMessageType = serverMessageType;
     }

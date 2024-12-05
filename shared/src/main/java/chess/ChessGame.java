@@ -8,11 +8,13 @@ public class ChessGame implements Cloneable {
 
     private ChessBoard board;
     private TeamColor nowTurn;
+    private boolean gameOver; // New field to track game state
 
     public ChessGame() {
         this.board = new ChessBoard();
         board.resetBoard();
         this.nowTurn = TeamColor.WHITE;
+        this.gameOver = false; // Initialize as not over
     }
 
     public TeamColor getTeamTurn() {
@@ -21,6 +23,14 @@ public class ChessGame implements Cloneable {
 
     public void setTeamTurn(TeamColor team) {
         this.nowTurn = team;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
     }
 
     @Override
@@ -32,12 +42,14 @@ public class ChessGame implements Cloneable {
             return false;
         }
         ChessGame chessGame = (ChessGame) o;
-        return Objects.equals(board, chessGame.board) && nowTurn == chessGame.nowTurn;
+        return Objects.equals(board, chessGame.board) &&
+                nowTurn == chessGame.nowTurn &&
+                gameOver == chessGame.gameOver; // Include gameOver in equality check
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, nowTurn);
+        return Objects.hash(board, nowTurn, gameOver);
     }
 
     public enum TeamColor {
@@ -45,12 +57,6 @@ public class ChessGame implements Cloneable {
         BLACK
     }
 
-    /**
-     * Gets all valid moves for a piece without leaving the king in check.
-     *
-     * @param startPosition the starting position of the piece
-     * @return a collection of valid moves, or an empty list if no moves are valid
-     */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
         if (piece == null) {
@@ -60,9 +66,6 @@ public class ChessGame implements Cloneable {
         return filterValidMoves(piece.pieceMoves(board, startPosition), piece.getTeamColor());
     }
 
-    /**
-     * Filters the moves that do not leave the king in check.
-     */
     private Collection<ChessMove> filterValidMoves(Collection<ChessMove> moves, TeamColor teamColor) {
         Collection<ChessMove> validMoves = new ArrayList<>();
         for (ChessMove move : moves) {
@@ -76,6 +79,10 @@ public class ChessGame implements Cloneable {
     }
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        if (gameOver) {
+            throw new InvalidMoveException("Game is over. No further moves can be made.");
+        }
+
         ChessPiece piece = board.getPiece(move.getStartPosition());
         if (piece == null) {
             throw new InvalidMoveException("Move is invalid: No piece at that position.");
