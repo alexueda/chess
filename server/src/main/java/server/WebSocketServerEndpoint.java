@@ -130,8 +130,20 @@ public class WebSocketServerEndpoint {
         try {
             // Validate session and gameID
             SessionInfo sessionInfo = activeSessions.get(session);
-            if (!isAuthenticated(session) || sessionInfo == null || sessionInfo.getGameID() != command.getGameID()) {
-                sendErrorMessage(session, "Error: Unauthorized or invalid game ID.");
+            if (sessionInfo == null || !isAuthenticated(session)) {
+                sendErrorMessage(session, "Error: Unauthorized action. Please connect first.");
+                return;
+            }
+
+            if (sessionInfo.getGameID() != command.getGameID()) {
+                sendErrorMessage(session, "Error: Invalid GameID.");
+                return;
+            }
+
+            // Validate authToken
+            AuthData authData = authDAO.getAuth(command.getAuthToken());
+            if (authData == null) {
+                sendErrorMessage(session, "Error: Invalid auth token.");
                 return;
             }
 
@@ -155,9 +167,7 @@ public class WebSocketServerEndpoint {
             String currentPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
                     ? gameData.whiteUsername()
                     : gameData.blackUsername();
-
-            AuthData currentPlayerAuthData = authDAO.getAuth(sessionInfo.getAuthToken());
-            if (currentPlayerAuthData == null || !currentPlayerAuthData.username().equals(currentPlayer)) {
+            if (!authData.username().equals(currentPlayer)) {
                 sendErrorMessage(session, "Error: It is not your turn.");
                 return;
             }
@@ -171,7 +181,13 @@ public class WebSocketServerEndpoint {
             }
 
             // Update the game state in the database
-            gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game));
+            gameDAO.updateGame(new GameData(
+                    gameData.gameID(),
+                    gameData.whiteUsername(),
+                    gameData.blackUsername(),
+                    gameData.gameName(),
+                    game
+            ));
 
             // Broadcast updated game state to all clients
             broadcastLoadGame(command.getGameID());
