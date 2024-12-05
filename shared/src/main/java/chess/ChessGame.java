@@ -33,6 +33,8 @@ public class ChessGame implements Cloneable {
         this.gameOver = gameOver;
     }
 
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
