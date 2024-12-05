@@ -128,7 +128,7 @@ public class WebSocketServerEndpoint {
 
     private void handleMakeMove(Session session, UserGameCommand command) {
         try {
-            // Validate session and authenticate
+            // Validate session and gameID
             SessionInfo sessionInfo = activeSessions.get(session);
             if (!isAuthenticated(session) || sessionInfo == null || sessionInfo.getGameID() != command.getGameID()) {
                 sendErrorMessage(session, "Error: Unauthorized or invalid game ID.");
@@ -144,12 +144,23 @@ public class WebSocketServerEndpoint {
 
             ChessGame game = gameData.game();
             if (game == null) {
-                sendErrorMessage(session, "Error: Game data is not available.");
-                return;
+                game = new ChessGame(); // Initialize a new ChessGame if null
+                logInfo("Game state was null; initialized a new ChessGame.", session);
             }
 
             // Deserialize move into ChessMove
             ChessMove move = gson.fromJson(gson.toJson(command.getMove()), ChessMove.class);
+
+            // Check if it is the player's turn
+            String currentPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
+                    ? gameData.whiteUsername()
+                    : gameData.blackUsername();
+
+            AuthData currentPlayerAuthData = authDAO.getAuth(sessionInfo.getAuthToken());
+            if (currentPlayerAuthData == null || !currentPlayerAuthData.username().equals(currentPlayer)) {
+                sendErrorMessage(session, "Error: It is not your turn.");
+                return;
+            }
 
             // Validate and apply the move
             try {
@@ -162,24 +173,25 @@ public class WebSocketServerEndpoint {
             // Update the game state in the database
             gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game));
 
+            // Broadcast updated game state to all clients
+            broadcastLoadGame(command.getGameID());
+
+            // Notify clients about the move
+            broadcastNotification("A move was made: " + move.toString(), gameData.gameID(), session);
+
             // Check for game-over conditions
             if (game.isInCheckmate(game.getTeamTurn())) {
                 broadcastNotification("Game over: Checkmate! " + game.getTeamTurn() + " loses.", gameData.gameID(), null);
-                return;
             } else if (game.isInStalemate(game.getTeamTurn())) {
                 broadcastNotification("Game over: Stalemate! It's a draw.", gameData.gameID(), null);
-                return;
             }
-
-            // Broadcast updated game state and notification
-            broadcastLoadGame(command.getGameID());
-            broadcastNotification("A move was made: " + move.toString(), gameData.gameID(), session);
 
         } catch (Exception e) {
             logError("Error handling MAKE_MOVE command", e, session);
             sendErrorMessage(session, "Error: Unable to process the move.");
         }
     }
+
 
 
     private void handleResign(Session session) {
