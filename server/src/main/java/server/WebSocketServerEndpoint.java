@@ -1,5 +1,8 @@
 package server;
 
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataaccess.*;
 import model.AuthData;
@@ -124,28 +127,60 @@ public class WebSocketServerEndpoint {
 
 
     private void handleMakeMove(Session session, UserGameCommand command) {
-        SessionInfo sessionInfo = activeSessions.get(session);
+        try {
+            // Validate session and authenticate
+            SessionInfo sessionInfo = activeSessions.get(session);
+            if (!isAuthenticated(session) || sessionInfo == null || sessionInfo.getGameID() != command.getGameID()) {
+                sendErrorMessage(session, "Error: Unauthorized or invalid game ID.");
+                return;
+            }
 
-        if (!isAuthenticated(session)) {
-            sendErrorMessage(session, "Unauthorized action. Please connect first.");
-            return;
-        }
+            // Retrieve game data
+            GameData gameData = gameDAO.getGame(command.getGameID());
+            if (gameData == null) {
+                sendErrorMessage(session, "Error: Game not found.");
+                return;
+            }
 
-        if (sessionInfo == null || sessionInfo.getGameID() != command.getGameID()) {
-            sendErrorMessage(session, "Invalid GameID.");
-            return;
-        }
+            ChessGame game = gameData.game();
+            if (game == null) {
+                sendErrorMessage(session, "Error: Game data is not available.");
+                return;
+            }
 
-        boolean moveValid = validateMove(); // Placeholder for move validation logic.
+            // Deserialize move into ChessMove
+            ChessMove move = gson.fromJson(gson.toJson(command.getMove()), ChessMove.class);
 
-        if (moveValid) {
-            logInfo("Valid move made for game ID: " + command.getGameID(), session);
+            // Validate and apply the move
+            try {
+                game.makeMove(move);
+            } catch (InvalidMoveException e) {
+                sendErrorMessage(session, "Error: " + e.getMessage());
+                return;
+            }
+
+            // Update the game state in the database
+            gameDAO.updateGame(new GameData(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), game));
+
+            // Check for game-over conditions
+            if (game.isInCheckmate(game.getTeamTurn())) {
+                broadcastNotification("Game over: Checkmate! " + game.getTeamTurn() + " loses.", gameData.gameID(), null);
+                return;
+            } else if (game.isInStalemate(game.getTeamTurn())) {
+                broadcastNotification("Game over: Stalemate! It's a draw.", gameData.gameID(), null);
+                return;
+            }
+
+            // Broadcast updated game state and notification
             broadcastLoadGame(command.getGameID());
-            broadcastNotification("A player made a move.", command.getGameID(), session);
-        } else {
-            sendErrorMessage(session, "Invalid move.");
+            broadcastNotification("A move was made: " + move.toString(), gameData.gameID(), session);
+
+        } catch (Exception e) {
+            logError("Error handling MAKE_MOVE command", e, session);
+            sendErrorMessage(session, "Error: Unable to process the move.");
         }
     }
+
 
     private void handleResign(Session session) {
         if (!isAuthenticated(session)) {
