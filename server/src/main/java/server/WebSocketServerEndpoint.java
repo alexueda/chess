@@ -276,25 +276,20 @@ public class WebSocketServerEndpoint {
                 sendErrorMessage(session, "Unauthorized action. Please connect first.");
                 return;
             }
-
             SessionInfo sessionInfo = activeSessions.remove(session);
             if (sessionInfo == null) {
                 sendErrorMessage(session, "Session is not associated with any game.");
                 return;
             }
-
             GameData gameData = gameDAO.getGame(sessionInfo.getGameID());
             if (gameData == null) {
                 sendErrorMessage(session, "Game not found.");
                 return;
             }
-
             AuthData leavingPlayerAuth = authDAO.getAuth(sessionInfo.getAuthToken());
             String leavingUsername = leavingPlayerAuth != null ? leavingPlayerAuth.username() : null;
-
             boolean isPlayer = false;
-
-            // Check if the leaving user is a player (white or black)
+            // Check if the leaving user is a player
             if (leavingUsername != null && leavingUsername.equals(gameData.whiteUsername())) {
                 gameData = new GameData(
                         gameData.gameID(),
@@ -314,12 +309,10 @@ public class WebSocketServerEndpoint {
                 );
                 isPlayer = true;
             }
-
             // Update the game state if a player has left
             if (isPlayer) {
                 gameDAO.updateGame(gameData);
             }
-
             // Prepare notification message
             String notificationMessage;
             if (isPlayer) {

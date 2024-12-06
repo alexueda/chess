@@ -251,11 +251,19 @@ public class UIClient implements ServerMessageObserver {
         }
         String start = parts[1];
         String end = parts[2];
-        websocket.sendMessage(String.format(
-                "{\"commandType\": \"MAKE_MOVE\", \"authToken\": \"%s\", \"gameID\": \"%d\", \"start\": \"%s\", \"end\": \"%s\"}",
-                server.getAuthToken(), getCurrentGameID(), start, end
-        ));
+
+        try {
+            // Send the move command to the server
+            websocket.sendMessage(String.format(
+                    "{\"commandType\": \"MAKE_MOVE\", \"authToken\": \"%s\", \"gameID\": \"%d\", \"start\": \"%s\", \"end\": \"%s\"}",
+                    server.getAuthToken(), getCurrentGameID(), start, end
+            ));
+        } catch (Exception e) {
+            System.out.println("Failed to make move: " + e.getMessage());
+        }
     }
+
+
 
     private void displayGamesList() {
         for (int i = 0; i < games.size(); i++) {
@@ -285,20 +293,28 @@ public class UIClient implements ServerMessageObserver {
             System.out.println("Usage: highlight_moves <PIECE_POSITION>");
             return;
         }
+
         String positionString = parts[1];
         try {
             ChessPosition position = new ChessPosition(
                     Character.getNumericValue(positionString.charAt(1)),
                     positionString.charAt(0) - 'a' + 1
             );
+
             List<ChessPosition> legalMoves = chessGame.validMoves(position).stream()
                     .map(ChessMove::getEndPosition).toList();
+
             UIBoard uiBoard = new UIBoard(chessGame.getBoard());
-            uiBoard.printBoardWhiteHL(legalMoves);
+            if (isObserver || isWhitePlayer) {
+                uiBoard.printBoardWhiteHL(legalMoves); // White perspective
+            } else {
+                uiBoard.printBoardBlackHL(legalMoves); // Black perspective
+            }
         } catch (Exception e) {
             System.out.println("Failed to highlight legal moves: " + e.getMessage());
         }
     }
+
 
     private void openWebsocket() {
         try {

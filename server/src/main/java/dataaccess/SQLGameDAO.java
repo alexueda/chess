@@ -76,8 +76,8 @@ public class SQLGameDAO implements GameDAO {
         String query = "UPDATE games SET gameState = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, serializeGame(updatedGame));
-            stmt.setInt(2, gameID);
+            stmt.setString(1, serializeGame(updatedGame)); // Serialize ChessGame
+            stmt.setInt(2, gameID); // Game ID
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new DataAccessException("Failed to update game state: " + e.getMessage());
