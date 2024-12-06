@@ -19,6 +19,7 @@ public class UIClient implements ServerMessageObserver {
     private boolean loggedIn = false;
     private boolean inGame = false;
     private boolean isObserver = false;
+    private boolean isWhitePlayer = false; // Track if the player is White
     private String username;
     private List<GameData> games;
     private ChessGame chessGame;
@@ -174,12 +175,27 @@ public class UIClient implements ServerMessageObserver {
             System.out.println("Joined game as " + color);
             inGame = true;
             isObserver = false;
+            isWhitePlayer = "WHITE".equals(color); // Set the player role
 
             chessGame = new ChessGame();
             openWebsocket();
-            redrawBoard();
+            redrawBoard(); // Display the board immediately after joining
         } else {
             System.out.println("Failed to join game.");
+        }
+    }
+
+    private void redrawBoard() {
+        if (chessGame == null) {
+            System.out.println("No game is currently loaded.");
+            return;
+        }
+
+        UIBoard uiBoard = new UIBoard(chessGame.getBoard());
+        if (isObserver || isWhitePlayer) {
+            uiBoard.printBoardWhiteBottom(); // White perspective for observers or White player
+        } else {
+            uiBoard.printBoardBlackBottom(); // Black perspective for Black player
         }
     }
 
@@ -202,20 +218,7 @@ public class UIClient implements ServerMessageObserver {
 
         chessGame = new ChessGame();
         openWebsocket();
-        redrawBoard();
-    }
-
-    private void redrawBoard() {
-        if (chessGame == null) {
-            System.out.println("No game is currently loaded.");
-            return;
-        }
-        UIBoard uiBoard = new UIBoard(chessGame.getBoard());
-        if (isObserver || username.equals(games.get(0).whiteUsername())) {
-            uiBoard.printBoardWhiteBottom();
-        } else {
-            uiBoard.printBoardBlackBottom();
-        }
+        redrawBoard(); // Observers see the board immediately
     }
 
     private void handleLeaveGame() {
@@ -349,7 +352,7 @@ public class UIClient implements ServerMessageObserver {
             case NOTIFICATION -> System.out.println("Notification: " + message.getMessage());
             case LOAD_GAME -> {
                 chessGame.getBoard().resetBoard(); // Update game state
-                redrawBoard();
+                redrawBoard(); // Refresh board after loading
             }
             case ERROR -> System.out.println("Error: " + message.getMessage());
         }

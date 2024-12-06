@@ -294,10 +294,11 @@ public class WebSocketServerEndpoint {
 
             boolean isPlayer = false;
 
+            // Check if the leaving user is a player (white or black)
             if (leavingUsername != null && leavingUsername.equals(gameData.whiteUsername())) {
                 gameData = new GameData(
                         gameData.gameID(),
-                        null,
+                        null,  // Remove white player
                         gameData.blackUsername(),
                         gameData.gameName(),
                         gameData.game()
@@ -307,21 +308,27 @@ public class WebSocketServerEndpoint {
                 gameData = new GameData(
                         gameData.gameID(),
                         gameData.whiteUsername(),
-                        null,
+                        null,  // Remove black player
                         gameData.gameName(),
                         gameData.game()
                 );
                 isPlayer = true;
             }
 
+            // Update the game state if a player has left
             if (isPlayer) {
                 gameDAO.updateGame(gameData);
             }
 
-            String notificationMessage = leavingUsername != null
-                    ? leavingUsername + " has left the game."
-                    : "An observer has left the game.";
+            // Prepare notification message
+            String notificationMessage;
+            if (isPlayer) {
+                notificationMessage = leavingUsername + " has left the game.";
+            } else {
+                notificationMessage = "An observer has left the game.";
+            }
 
+            // Broadcast notification to remaining sessions
             broadcastNotification(notificationMessage, gameData.gameID(), session);
 
             if (isPlayer) {
@@ -329,6 +336,9 @@ public class WebSocketServerEndpoint {
             } else {
                 logInfo("Observer left: " + sessionInfo.getAuthToken(), session);
             }
+
+            // Close the session
+            session.close();
 
         } catch (Exception e) {
             logError("Error handling LEAVE command", e, session);

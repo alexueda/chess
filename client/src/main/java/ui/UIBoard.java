@@ -32,19 +32,13 @@ public class UIBoard {
 
     private void printBoard(boolean whiteBottom, List<ChessPosition> highlights) {
         PrintStream out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
-        out.print(ERASE_SCREEN);
-        out.print("   ");
 
-        // Print column headers
-        if (whiteBottom) {
-            for (char col = 'a'; col <= 'h'; col++) {
-                out.print(SET_TEXT_COLOR_WHITE + " " + col + " " + RESET_TEXT_COLOR);
-            }
-        } else {
-            for (char col = 'h'; col >= 'a'; col--) {
-                out.print(SET_TEXT_COLOR_WHITE + " " + col + " " + RESET_TEXT_COLOR);
-            }
-        }
+        // Clear the screen before printing
+        out.print(ERASE_SCREEN);
+
+        // Print column headers at the top
+        out.print("   ");
+        printColumnHeaders(whiteBottom, out);
         out.println();
 
         int startRow = whiteBottom ? 8 : 1;
@@ -53,15 +47,16 @@ public class UIBoard {
 
         // Print each row of the board
         for (int row = startRow; row != endRow + rowIncrement; row += rowIncrement) {
+            // Print the row number
             out.print(SET_TEXT_COLOR_WHITE + " " + row + " " + RESET_TEXT_COLOR);
 
             for (int col = 1; col <= 8; col++) {
-                int actualCol = whiteBottom ? col : 9 - col;  // Reverse columns for Black's perspective
+                int actualCol = whiteBottom ? col : 9 - col; // Adjust columns for perspective
                 ChessPosition position = new ChessPosition(row, actualCol);
                 ChessPiece piece = chessBoard.getPiece(position);
                 String pieceSymbol = getPieceSymbol(piece);
 
-                // Highlight squares if they are in the highlights list
+                // Determine background color
                 boolean isHighlighted = highlights != null && highlights.contains(position);
                 boolean isLightSquare = (row + actualCol) % 2 == 1;
                 String bgColor = isHighlighted
@@ -71,12 +66,18 @@ public class UIBoard {
                 out.print(bgColor + " " + pieceSymbol + " " + RESET_BG_COLOR);
             }
 
+            // Print the row number again for clarity
             out.print(SET_TEXT_COLOR_WHITE + " " + row + RESET_TEXT_COLOR);
             out.println();
         }
 
-        // Print column headers again
+        // Print column headers at the bottom
         out.print("   ");
+        printColumnHeaders(whiteBottom, out);
+        out.println();
+    }
+
+    private void printColumnHeaders(boolean whiteBottom, PrintStream out) {
         if (whiteBottom) {
             for (char col = 'a'; col <= 'h'; col++) {
                 out.print(SET_TEXT_COLOR_WHITE + " " + col + " " + RESET_TEXT_COLOR);
@@ -86,7 +87,6 @@ public class UIBoard {
                 out.print(SET_TEXT_COLOR_WHITE + " " + col + " " + RESET_TEXT_COLOR);
             }
         }
-        out.println();
     }
 
     private String getPieceSymbol(ChessPiece piece) {
@@ -105,9 +105,10 @@ public class UIBoard {
             default -> symbol = " ";
         }
 
+        // Determine text color based on piece team color
         String color = (piece.getTeamColor() == ChessGame.TeamColor.WHITE)
-                ? SET_TEXT_COLOR_BLUE
-                : SET_TEXT_COLOR_RED;
+                ? SET_TEXT_COLOR_BLUE  // Blue for white team
+                : SET_TEXT_COLOR_RED;  // Red for black team
 
         return color + symbol + RESET_TEXT_COLOR;
     }

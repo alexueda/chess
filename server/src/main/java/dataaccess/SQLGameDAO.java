@@ -72,6 +72,20 @@ public class SQLGameDAO implements GameDAO {
     }
 
     @Override
+    public void updateGameState(int gameID, ChessGame updatedGame) throws DataAccessException {
+        String query = "UPDATE games SET gameState = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, serializeGame(updatedGame));
+            stmt.setInt(2, gameID);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to update game state: " + e.getMessage());
+        }
+    }
+
+
+    @Override
     public Map<Integer, GameData> getAllGames() throws DataAccessException {
         String query = "SELECT id, whiteUsername, blackUsername, gameName, gameState FROM games";
         Map<Integer, GameData> games = new HashMap<>();

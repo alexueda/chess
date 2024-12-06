@@ -1,8 +1,9 @@
 package service;
 
+import chess.ChessGame;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import dataaccess.ClientCommunicator;
+import dataaccess.*;
 import model.GameData;
 
 import java.io.IOException;
@@ -12,10 +13,22 @@ import java.util.*;
 public class ServerFacade {
     private final ClientCommunicator communicator;
     private final Gson gson = new Gson();
+    private final GameDAO gameDAO; // Declare gameDAO for database interactions
 
     public ServerFacade(String baseUrl) {
         this.communicator = new ClientCommunicator(baseUrl);
+        this.gameDAO = new SQLGameDAO(); // Initialize gameDAO with SQLGameDAO implementation
     }
+
+    public void updateGameState(int gameID, ChessGame updatedGame) throws DataAccessException {
+        gameDAO.updateGameState(gameID, updatedGame); // Use gameDAO to update the game state
+    }
+
+    public GameData getGame(int gameID) throws IOException {
+        String response = communicator.sendGetRequest("/game/" + gameID);
+        return gson.fromJson(response, GameData.class);
+    }
+
 
     public boolean login(String username, String password) {
         Map<String, String> credentials = Map.of("username", username, "password", password);

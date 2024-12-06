@@ -1,5 +1,6 @@
 import service.ServerFacade;
 import ui.UIClient;
+import dataaccess.SQLGameDAO;
 
 public class Main {
     public static void main(String[] args) {
