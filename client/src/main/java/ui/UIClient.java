@@ -23,6 +23,7 @@ public class UIClient implements ServerMessageObserver {
     private String username;
     private List<GameData> games;
     private ChessGame chessGame;
+    private int currentGameIndex = -1;
 
     public UIClient(ServerFacade server) {
         this.server = server;
@@ -177,6 +178,8 @@ public class UIClient implements ServerMessageObserver {
             isObserver = false;
             isWhitePlayer = "WHITE".equals(color); // Set the player role
 
+            currentGameIndex = gameIndex;
+
             chessGame = new ChessGame();
             openWebsocket();
             redrawBoard(); // Display the board immediately after joining
@@ -222,10 +225,11 @@ public class UIClient implements ServerMessageObserver {
     }
 
     private void handleLeaveGame() {
+        int gameID = games.get(currentGameIndex).gameID();
         try {
             websocket.sendMessage(String.format(
                     "{\"commandType\": \"LEAVE\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
-                    server.getAuthToken(), getCurrentGameID()
+                    server.getAuthToken(), gameID
             ));
             inGame = false;
             chessGame = null;
@@ -252,11 +256,13 @@ public class UIClient implements ServerMessageObserver {
         String start = parts[1];
         String end = parts[2];
 
+        int gameID = games.get(currentGameIndex).gameID();
+
         try {
             // Send the move command to the server
             websocket.sendMessage(String.format(
                     "{\"commandType\": \"MAKE_MOVE\", \"authToken\": \"%s\", \"gameID\": \"%d\", \"start\": \"%s\", \"end\": \"%s\"}",
-                    server.getAuthToken(), getCurrentGameID(), start, end
+                    server.getAuthToken(), gameID, start, end
             ));
         } catch (Exception e) {
             System.out.println("Failed to make move: " + e.getMessage());
@@ -277,10 +283,11 @@ public class UIClient implements ServerMessageObserver {
     }
 
     private void handleResign() {
+        int gameID = games.get(currentGameIndex).gameID();
         try {
             websocket.sendMessage(String.format(
                     "{\"commandType\": \"RESIGN\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
-                    server.getAuthToken(), getCurrentGameID()
+                    server.getAuthToken(), gameID
             ));
             System.out.println("You resigned from the game.");
         } catch (Exception e) {
