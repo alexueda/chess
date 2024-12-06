@@ -13,15 +13,9 @@ import java.util.*;
 public class ServerFacade {
     private final ClientCommunicator communicator;
     private final Gson gson = new Gson();
-    private final GameDAO gameDAO; // Declare gameDAO for database interactions
 
     public ServerFacade(String baseUrl) {
         this.communicator = new ClientCommunicator(baseUrl);
-        this.gameDAO = new SQLGameDAO(); // Initialize gameDAO with SQLGameDAO implementation
-    }
-
-    public void updateGameState(int gameID, ChessGame updatedGame) throws DataAccessException {
-        gameDAO.updateGameState(gameID, updatedGame); // Use gameDAO to update the game state
     }
 
     public GameData getGame(int gameID) throws IOException {
