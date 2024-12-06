@@ -9,7 +9,7 @@ public class LoadGameMessage extends ServerMessage {
         super(ServerMessageType.LOAD_GAME);
     }
 
-    public ChessGame getGame() {
+    public ChessGame getChessGame() {
         return game;
     }
 }

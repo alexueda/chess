@@ -1,5 +1,8 @@
 package websocket.messages;
 
+import chess.ChessGame;
+import model.GameData;
+
 public class ServerMessage {
     public enum ServerMessageType {
         LOAD_GAME,
@@ -9,7 +12,7 @@ public class ServerMessage {
 
     private ServerMessageType serverMessageType;
     private String message; // Optional field for notifications or errors
-    private Object game;    // Optional field for game state in LOAD_GAME
+    private GameData game;    // Optional field for game state in LOAD_GAME
 
     // Default constructor
     public ServerMessage() {}
@@ -26,7 +29,7 @@ public class ServerMessage {
     }
 
     // Constructor for LOAD_GAME messages
-    public ServerMessage(ServerMessageType serverMessageType, Object game) {
+    public ServerMessage(ServerMessageType serverMessageType, GameData game) {
         this.serverMessageType = serverMessageType;
         this.game = game;
     }
@@ -40,7 +43,7 @@ public class ServerMessage {
         return message;
     }
 
-    public Object getGame() {
+    public GameData getGame() {
         return game;
     }
 
@@ -53,7 +56,7 @@ public class ServerMessage {
         this.message = message;
     }
 
-    public void setGame(Object game) {
+    public void setGame(GameData game) {
         this.game = game;
     }
 }

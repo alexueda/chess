@@ -154,7 +154,7 @@ public class WebSocketServerEndpoint {
                 logInfo("Game state was null; initialized a new ChessGame.", session);
             }
 
-            ChessMove move = gson.fromJson(gson.toJson(command.getMove()), ChessMove.class);
+            ChessMove move = command.getMove();
 
             String currentPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
                     ? gameData.whiteUsername()
@@ -362,11 +362,11 @@ public class WebSocketServerEndpoint {
         });
     }
 
-    private void broadcastLoadGame(int gameID) {
+    private void broadcastLoadGame(int gameID) throws DataAccessException {
+        GameData gameData = gameDAO.getGame(gameID);
         activeSessions.forEach((session, sessionInfo) -> {
             if (sessionInfo.getGameID() == gameID) {
                 try {
-                    GameData gameData = gameDAO.getGame(gameID);
                     sendLoadGame(session, gameData);
                 } catch (Exception e) {
                     logError("Error broadcasting load game", e, session);

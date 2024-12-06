@@ -1,12 +1,14 @@
 package ui;
 
-import chess.ChessBoard;
+import chess.ChessPiece;
 import chess.ChessPosition;
 import chess.ChessMove;
 import chess.ChessGame;
+import com.google.gson.Gson;
 import model.GameData;
 import service.ServerFacade;
 import websocket.WebsocketCommunicator;
+import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessageObserver;
 
@@ -23,7 +25,7 @@ public class UIClient implements ServerMessageObserver {
     private String username;
     private List<GameData> games;
     private ChessGame chessGame;
-    private int currentGameIndex = -1;
+    private int gameID = -1;
 
     public UIClient(ServerFacade server) {
         this.server = server;
@@ -176,13 +178,14 @@ public class UIClient implements ServerMessageObserver {
             System.out.println("Joined game as " + color);
             inGame = true;
             isObserver = false;
-            isWhitePlayer = "WHITE".equals(color); // Set the player role
+            isWhitePlayer = "WHITE".equals(color);
 
-            currentGameIndex = gameIndex;
+            gameID = games.get(gameIndex).gameID();
 
             chessGame = new ChessGame();
             openWebsocket();
-            redrawBoard(); // Display the board immediately after joining
+            websocket.sendMessage(new Gson().toJson(new UserGameCommand(UserGameCommand.CommandType.CONNECT, server.getAuthToken(), gameID)));
+            redrawBoard();
         } else {
             System.out.println("Failed to join game.");
         }
@@ -225,7 +228,6 @@ public class UIClient implements ServerMessageObserver {
     }
 
     private void handleLeaveGame() {
-        int gameID = games.get(currentGameIndex).gameID();
         try {
             websocket.sendMessage(String.format(
                     "{\"commandType\": \"LEAVE\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
@@ -255,15 +257,155 @@ public class UIClient implements ServerMessageObserver {
         }
         String start = parts[1];
         String end = parts[2];
+        String promotion = parts.length == 4 ? parts[3] : "";
 
-        int gameID = games.get(currentGameIndex).gameID();
+        if (start.length() != 2 || end.length() != 2) {
+            System.out.println("Usage: make_move <a1> <a2>");
+            return;
+        }
+
+        int startColumn = 0;
+        int startRow = 0;
+
+        switch(start.charAt(0)) {
+            case 'a':
+                startColumn = 1;
+                break;
+            case 'b':
+                startColumn = 2;
+                break;
+            case 'c':
+                startColumn = 3;
+                break;
+            case 'd':
+                startColumn = 4;
+                break;
+            case 'e':
+                startColumn = 5;
+                break;
+            case 'f':
+                startColumn = 6;
+                break;
+            case 'g':
+                startColumn = 7;
+                break;
+            case 'h':
+                startColumn = 8;
+                break;
+            default:
+                System.out.println("Invalid start position.");
+                return;
+        }
+        switch(start.charAt(1)) {
+            case '1':
+                startRow = 1;
+                break;
+            case '2':
+                startRow = 2;
+                break;
+            case '3':
+                startRow = 3;
+                break;
+            case '4':
+                startRow = 4;
+                break;
+            case '5':
+                startRow = 5;
+                break;
+            case '6':
+                startRow = 6;
+                break;
+            case '7':
+                startRow = 7;
+                break;
+            case '8':
+                startRow = 8;
+                break;
+            default:
+                System.out.println("Invalid start position.");
+                return;
+        }
+
+        int endColumn = 0;
+        int endRow = 0;
+        switch(end.charAt(0)) {
+            case 'a':
+                endColumn = 1;
+                break;
+            case 'b':
+                endColumn = 2;
+                break;
+            case 'c':
+                endColumn = 3;
+                break;
+            case 'd':
+                endColumn = 4;
+                break;
+            case 'e':
+                endColumn = 5;
+                break;
+            case 'f':
+                endColumn = 6;
+                break;
+            case 'g':
+                endColumn = 7;
+                break;
+            case 'h':
+                endColumn = 8;
+                break;
+            default:
+                System.out.println("Invalid end position.");
+                return;
+        }
+        switch(end.charAt(1)) {
+            case '1':
+                endRow = 1;
+                break;
+            case '2':
+                endRow = 2;
+                break;
+            case '3':
+                endRow = 3;
+                break;
+            case '4':
+                endRow = 4;
+                break;
+            case '5':
+                endRow = 5;
+                break;
+            case '6':
+                endRow = 6;
+                break;
+            case '7':
+                endRow = 7;
+                break;
+            case '8':
+                endRow = 8;
+                break;
+            default:
+                System.out.println("Invalid start position.");
+                return;
+        }
+        ChessPiece.PieceType promotionType = null;
+        switch(promotion) {
+            case "KNIGHT":
+                promotionType = ChessPiece.PieceType.KNIGHT;
+                break;
+            case "ROOK":
+                promotionType = ChessPiece.PieceType.ROOK;
+                break;
+            case "BISHOP":
+                promotionType = ChessPiece.PieceType.BISHOP;
+                break;
+            case "QUEEN":
+                promotionType = ChessPiece.PieceType.QUEEN;
+                break;
+        }
+        ChessMove move = new ChessMove(new ChessPosition(startColumn, startRow), new ChessPosition(endColumn, endRow), promotionType);
 
         try {
             // Send the move command to the server
-            websocket.sendMessage(String.format(
-                    "{\"commandType\": \"MAKE_MOVE\", \"authToken\": \"%s\", \"gameID\": \"%d\", \"start\": \"%s\", \"end\": \"%s\"}",
-                    server.getAuthToken(), gameID, start, end
-            ));
+            websocket.sendMessage(new Gson().toJson(new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, server.getAuthToken(), gameID, move)));
         } catch (Exception e) {
             System.out.println("Failed to make move: " + e.getMessage());
         }
@@ -283,7 +425,6 @@ public class UIClient implements ServerMessageObserver {
     }
 
     private void handleResign() {
-        int gameID = games.get(currentGameIndex).gameID();
         try {
             websocket.sendMessage(String.format(
                     "{\"commandType\": \"RESIGN\", \"authToken\": \"%s\", \"gameID\": \"%d\"}",
@@ -374,7 +515,7 @@ public class UIClient implements ServerMessageObserver {
         switch (message.getServerMessageType()) {
             case NOTIFICATION -> System.out.println("Notification: " + message.getMessage());
             case LOAD_GAME -> {
-                chessGame.getBoard().resetBoard(); // Update game state
+                chessGame = message.getGame().game();// Update game state
                 redrawBoard(); // Refresh board after loading
             }
             case ERROR -> System.out.println("Error: " + message.getMessage());
