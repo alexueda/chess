@@ -258,6 +258,7 @@ public class UIClient implements ServerMessageObserver {
                     "{\"commandType\": \"MAKE_MOVE\", \"authToken\": \"%s\", \"gameID\": \"%d\", \"start\": \"%s\", \"end\": \"%s\"}",
                     server.getAuthToken(), getCurrentGameID(), start, end
             ));
+            redrawBoard();
         } catch (Exception e) {
             System.out.println("Failed to make move: " + e.getMessage());
         }
