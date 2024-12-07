@@ -1,5 +1,6 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import model.AuthData;
@@ -19,7 +20,7 @@ public class CreateGameService {
         if (authData == null) {
             throw new Exception("Unauthorized");
         }
-        GameData newGame = new GameData(0, null, null, gameName, null);
+        GameData newGame = new GameData(0, null, null, gameName, new ChessGame());
         int gameID = gameDAO.insertGame(newGame);
         return gameID;
     }

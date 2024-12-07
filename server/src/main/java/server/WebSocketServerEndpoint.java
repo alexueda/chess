@@ -153,7 +153,6 @@ public class WebSocketServerEndpoint {
                 game = new ChessGame(); // Initialize a new ChessGame if null
                 logInfo("Game state was null; initialized a new ChessGame.", session);
             }
-
             ChessMove move = command.getMove();
 
             String currentPlayer = game.getTeamTurn() == ChessGame.TeamColor.WHITE
@@ -178,6 +177,8 @@ public class WebSocketServerEndpoint {
                     gameData.gameName(),
                     game
             ));
+
+            gameDAO.updateGameState(gameData.gameID(), game);
 
             broadcastLoadGame(command.getGameID());
 

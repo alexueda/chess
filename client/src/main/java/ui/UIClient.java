@@ -401,10 +401,10 @@ public class UIClient implements ServerMessageObserver {
                 promotionType = ChessPiece.PieceType.QUEEN;
                 break;
         }
+
         ChessMove move = new ChessMove(new ChessPosition(startColumn, startRow), new ChessPosition(endColumn, endRow), promotionType);
 
         try {
-            // Send the move command to the server
             websocket.sendMessage(new Gson().toJson(new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, server.getAuthToken(), gameID, move)));
         } catch (Exception e) {
             System.out.println("Failed to make move: " + e.getMessage());
@@ -516,7 +516,7 @@ public class UIClient implements ServerMessageObserver {
             case NOTIFICATION -> System.out.println("Notification: " + message.getMessage());
             case LOAD_GAME -> {
                 chessGame = message.getGame().game();// Update game state
-                redrawBoard(); // Refresh board after loading
+                redrawBoard();
             }
             case ERROR -> System.out.println("Error: " + message.getMessage());
         }

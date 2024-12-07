@@ -7,7 +7,7 @@ import websocket.messages.ServerMessageObserver;
 import javax.websocket.*;
 import java.net.URI;
 
-public class WebsocketCommunicator {
+public class WebsocketCommunicator implements MessageHandler.Whole<String> {
 
     private final ServerMessageObserver observer;
     private Session session;
@@ -29,14 +29,14 @@ public class WebsocketCommunicator {
                 }
             }, uri);
 
-            session.addMessageHandler((MessageHandler.Whole<String>) this::handleMessage);
+            session.addMessageHandler(this);
         } catch (Exception e) {
             System.err.println("Failed to connect to WebSocket server: " + e.getMessage());
             throw e;
         }
     }
 
-    private void handleMessage(String message) {
+    public void onMessage(String message) {
         try {
             ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
             observer.notify(serverMessage);
@@ -62,5 +62,9 @@ public class WebsocketCommunicator {
         } catch (Exception e) {
             System.err.println("Error closing WebSocket: " + e.getMessage());
         }
+    }
+
+    public boolean isConnected() {
+        return session != null && session.isOpen();
     }
 }
