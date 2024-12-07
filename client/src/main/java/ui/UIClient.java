@@ -243,166 +243,75 @@ public class UIClient implements ServerMessageObserver {
     }
 
     private void handleMakeMove(String[] parts) {
-        if (parts.length < 3) {
-            System.out.println("Usage: make_move <START> <END>");
-            return;
-        }
+        if (!validateMoveInput(parts)) return;
+
         String start = parts[1];
         String end = parts[2];
         String promotion = parts.length == 4 ? parts[3] : "";
 
-        if (start.length() != 2 || end.length() != 2) {
+        ChessMove move = createMove(start, end, promotion);
+        if (move == null) return;
+
+        sendMoveToServer(move);
+    }
+
+    private boolean validateMoveInput(String[] parts) {
+        if (parts.length < 3) {
+            System.out.println("Usage: make_move <START> <END>");
+            return false;
+        }
+        if (parts[1].length() != 2 || parts[2].length() != 2) {
             System.out.println("Usage: make_move <a1> <a2>");
-            return;
+            return false;
         }
+        return true;
+    }
 
-        int startColumn = 0;
-        int startRow = 0;
-
-        switch(start.charAt(0)) {
-            case 'a':
-                startColumn = 1;
-                break;
-            case 'b':
-                startColumn = 2;
-                break;
-            case 'c':
-                startColumn = 3;
-                break;
-            case 'd':
-                startColumn = 4;
-                break;
-            case 'e':
-                startColumn = 5;
-                break;
-            case 'f':
-                startColumn = 6;
-                break;
-            case 'g':
-                startColumn = 7;
-                break;
-            case 'h':
-                startColumn = 8;
-                break;
-            default:
-                System.out.println("Invalid start position.");
-                return;
-        }
-        switch(start.charAt(1)) {
-            case '1':
-                startRow = 1;
-                break;
-            case '2':
-                startRow = 2;
-                break;
-            case '3':
-                startRow = 3;
-                break;
-            case '4':
-                startRow = 4;
-                break;
-            case '5':
-                startRow = 5;
-                break;
-            case '6':
-                startRow = 6;
-                break;
-            case '7':
-                startRow = 7;
-                break;
-            case '8':
-                startRow = 8;
-                break;
-            default:
-                System.out.println("Invalid start position.");
-                return;
-        }
-
-        int endColumn = 0;
-        int endRow = 0;
-        switch(end.charAt(0)) {
-            case 'a':
-                endColumn = 1;
-                break;
-            case 'b':
-                endColumn = 2;
-                break;
-            case 'c':
-                endColumn = 3;
-                break;
-            case 'd':
-                endColumn = 4;
-                break;
-            case 'e':
-                endColumn = 5;
-                break;
-            case 'f':
-                endColumn = 6;
-                break;
-            case 'g':
-                endColumn = 7;
-                break;
-            case 'h':
-                endColumn = 8;
-                break;
-            default:
-                System.out.println("Invalid end position.");
-                return;
-        }
-        switch(end.charAt(1)) {
-            case '1':
-                endRow = 1;
-                break;
-            case '2':
-                endRow = 2;
-                break;
-            case '3':
-                endRow = 3;
-                break;
-            case '4':
-                endRow = 4;
-                break;
-            case '5':
-                endRow = 5;
-                break;
-            case '6':
-                endRow = 6;
-                break;
-            case '7':
-                endRow = 7;
-                break;
-            case '8':
-                endRow = 8;
-                break;
-            default:
-                System.out.println("Invalid start position.");
-                return;
-        }
-        ChessPiece.PieceType promotionType = null;
-        switch(promotion) {
-            case "KNIGHT":
-                promotionType = ChessPiece.PieceType.KNIGHT;
-                break;
-            case "ROOK":
-                promotionType = ChessPiece.PieceType.ROOK;
-                break;
-            case "BISHOP":
-                promotionType = ChessPiece.PieceType.BISHOP;
-                break;
-            case "QUEEN":
-                promotionType = ChessPiece.PieceType.QUEEN;
-                break;
-        }
-
-        ChessMove move = new ChessMove(new ChessPosition(startColumn, startRow), new ChessPosition(endColumn, endRow), promotionType);
-
+    private ChessMove createMove(String start, String end, String promotion) {
         try {
-            websocket.sendMessage(new Gson().toJson(new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, server.getAuthToken(), gameID, move)));
-        } catch (Exception e) {
-            System.out.println("Failed to make move: " + e.getMessage());
+            ChessPosition startPos = parsePosition(start);
+            ChessPosition endPos = parsePosition(end);
+            ChessPiece.PieceType promotionType = parsePromotion(promotion);
+
+            return new ChessMove(startPos, endPos, promotionType);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid move input: " + e.getMessage());
+            return null;
         }
     }
 
+    private ChessPosition parsePosition(String position) {
+        int col = position.charAt(0) - 'a' + 1;
+        int row = Character.getNumericValue(position.charAt(1));
+
+        if (col < 1 || col > 8 || row < 1 || row > 8) {
+            throw new IllegalArgumentException("Invalid position: " + position);
+        }
+        return new ChessPosition(row, col);
+    }
+
+    private ChessPiece.PieceType parsePromotion(String promotion) {
+        return switch (promotion.toUpperCase()) {
+            case "KNIGHT" -> ChessPiece.PieceType.KNIGHT;
+            case "ROOK" -> ChessPiece.PieceType.ROOK;
+            case "BISHOP" -> ChessPiece.PieceType.BISHOP;
+            case "QUEEN" -> ChessPiece.PieceType.QUEEN;
+            default -> null;
+        };
+    }
+
+    private void sendMoveToServer(ChessMove move) {
+        try {
+            websocket.sendMessage(new Gson().toJson(new UserGameCommand(
+                    UserGameCommand.CommandType.MAKE_MOVE,
+                    server.getAuthToken(),
+                    gameID,
+                    move
+            )));
+        } catch (Exception e) {
+            System.out.println("Failed to send move to server: " + e.getMessage());
+        }
+    }
 
 
     private void displayGamesList() {

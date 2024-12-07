@@ -378,10 +378,6 @@ public class WebSocketServerEndpoint {
         });
     }
 
-    private boolean validateMove() {
-        return true;
-    }
-
 
     private void sendErrorMessage(Session session, String errorMessage) {
         if (errorMessage == null || errorMessage.isEmpty()) {
