@@ -243,14 +243,18 @@ public class UIClient implements ServerMessageObserver {
     }
 
     private void handleMakeMove(String[] parts) {
-        if (!validateMoveInput(parts)) return;
+        if (!validateMoveInput(parts)) {
+            return;
+        }
 
         String start = parts[1];
         String end = parts[2];
         String promotion = parts.length == 4 ? parts[3] : "";
 
         ChessMove move = createMove(start, end, promotion);
-        if (move == null) return;
+        if (move == null) {
+            return;
+        }
 
         sendMoveToServer(move);
     }

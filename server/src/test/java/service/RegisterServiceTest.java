@@ -1,25 +1,20 @@
 package service;
 
-import dataaccess.*;
-import model.UserData;
+import dataaccess.DataAccessException;
 import model.AuthData;
+import model.UserData;
 import org.junit.jupiter.api.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class RegisterServiceTest {
+public class RegisterServiceTest extends AbstractServiceTest {
 
-    private UserDAO mockUserDAO;
-    private AuthDAO mockAuthDAO;
     private RegisterService registerService;
-    private ClearService clearService;
 
     @BeforeEach
+    @Override
     public void setup() throws DataAccessException {
-        mockUserDAO = new SQLUserDAO();
-        mockAuthDAO = new SQLAuthDAO();
+        super.setup();
         registerService = new RegisterService(mockUserDAO, mockAuthDAO);
-        clearService = new ClearService(mockUserDAO, mockAuthDAO, new SQLGameDAO());
-        clearService.clear();
     }
 
     @Test
@@ -27,9 +22,10 @@ public class RegisterServiceTest {
     @DisplayName("Register Success")
     public void testRegisterSuccess() throws DataAccessException {
         UserData newUser = new UserData("testuser", "password123", "testuser@mail.com");
-        AuthData result = registerService.register(newUser);
+        AuthData authData = registerService.register(newUser);
+
         Assertions.assertNotNull(mockUserDAO.getUser(newUser.username()), "User should be successfully registered.");
-        Assertions.assertNotNull(mockAuthDAO.getAuth(result.authToken()), "Auth token should be generated.");
+        Assertions.assertNotNull(mockAuthDAO.getAuth(authData.authToken()), "Auth token should be generated.");
     }
 
     @Test
@@ -37,6 +33,7 @@ public class RegisterServiceTest {
     @DisplayName("Register Failure - Missing Fields")
     public void testRegisterMissingFields() {
         UserData incompleteUser = new UserData("testuser", null, "testuser@mail.com");
+
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             registerService.register(incompleteUser);
         }, "Exception should be thrown for missing required fields.");
@@ -47,7 +44,8 @@ public class RegisterServiceTest {
     @DisplayName("Register Failure - Duplicate Username")
     public void testRegisterDuplicateUsername() throws DataAccessException {
         UserData newUser = new UserData("duplicateUser", "password123", "duplicate@mail.com");
-        registerService.register(newUser);  // Register once
+        registerService.register(newUser); // Register once
+
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             registerService.register(newUser);
         }, "Exception should be thrown for duplicate username.");
