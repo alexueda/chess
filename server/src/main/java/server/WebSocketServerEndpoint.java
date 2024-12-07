@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @WebSocket
 public class WebSocketServerEndpoint {
 
-    private static final Map<Session, SessionInfo> activeSessions = new ConcurrentHashMap<>();
+    private static final Map<Session, SessionInfo> ACTIVE_SESSIONS = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
 
     private final AuthDAO authDAO = new SQLAuthDAO();
@@ -45,7 +45,7 @@ public class WebSocketServerEndpoint {
 
     @OnWebSocketConnect
     public void onOpen(Session session) {
-        activeSessions.put(session, new SessionInfo("", -1));
+        ACTIVE_SESSIONS.put(session, new SessionInfo("", -1));
         logInfo("WebSocket connection established", session);
     }
 
@@ -75,14 +75,16 @@ public class WebSocketServerEndpoint {
 
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
-        activeSessions.remove(session);
+        ACTIVE_SESSIONS.remove(session);
         logInfo("WebSocket connection closed. Reason: " + reason, session);
     }
 
     @OnWebSocketError
     public void onError(Session session, Throwable throwable) {
         logError("WebSocket error occurred", throwable, session);
-        if (session != null) activeSessions.remove(session);
+        if (session != null) {
+            ACTIVE_SESSIONS.remove(session);
+        }
     }
 
     private void handleConnect(Session session, UserGameCommand command) {
@@ -101,7 +103,7 @@ public class WebSocketServerEndpoint {
                 return;
             }
 
-            activeSessions.put(session, new SessionInfo(authData.authToken(), gameData.gameID()));
+            ACTIVE_SESSIONS.put(session, new SessionInfo(authData.authToken(), gameData.gameID()));
 
             sendLoadGame(session, gameData);
 
@@ -125,7 +127,7 @@ public class WebSocketServerEndpoint {
 
     private void handleMakeMove(Session session, UserGameCommand command) {
         try {
-            SessionInfo sessionInfo = activeSessions.get(session);
+            SessionInfo sessionInfo = ACTIVE_SESSIONS.get(session);
             if (sessionInfo == null || !isAuthenticated(session)) {
                 sendErrorMessage(session, "Error: Unauthorized action. Please connect first.");
                 return;
@@ -206,7 +208,7 @@ public class WebSocketServerEndpoint {
             }
 
             // Retrieve session information
-            SessionInfo sessionInfo = activeSessions.get(session);
+            SessionInfo sessionInfo = ACTIVE_SESSIONS.get(session);
             if (sessionInfo == null) {
                 sendErrorMessage(session, "Session is not associated with any game.");
                 return;
@@ -277,7 +279,7 @@ public class WebSocketServerEndpoint {
                 sendErrorMessage(session, "Unauthorized action. Please connect first.");
                 return;
             }
-            SessionInfo sessionInfo = activeSessions.remove(session);
+            SessionInfo sessionInfo = ACTIVE_SESSIONS.remove(session);
             if (sessionInfo == null) {
                 sendErrorMessage(session, "Session is not associated with any game.");
                 return;
@@ -342,7 +344,7 @@ public class WebSocketServerEndpoint {
 
 
     private boolean isAuthenticated(Session session) {
-        SessionInfo sessionInfo = activeSessions.get(session);
+        SessionInfo sessionInfo = ACTIVE_SESSIONS.get(session);
         return sessionInfo != null && sessionInfo.getAuthToken() != null && !sessionInfo.getAuthToken().isEmpty();
     }
 
@@ -356,7 +358,7 @@ public class WebSocketServerEndpoint {
         ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
         String notificationJson = gson.toJson(notification);
 
-        activeSessions.forEach((session, sessionInfo) -> {
+        ACTIVE_SESSIONS.forEach((session, sessionInfo) -> {
             if (sessionInfo.getGameID() == gameID && !session.equals(excludeSession)) {
                 sendMessage(session, notificationJson);
             }
@@ -365,7 +367,7 @@ public class WebSocketServerEndpoint {
 
     private void broadcastLoadGame(int gameID) throws DataAccessException {
         GameData gameData = gameDAO.getGame(gameID);
-        activeSessions.forEach((session, sessionInfo) -> {
+        ACTIVE_SESSIONS.forEach((session, sessionInfo) -> {
             if (sessionInfo.getGameID() == gameID) {
                 try {
                     sendLoadGame(session, gameData);

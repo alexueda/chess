@@ -242,14 +242,6 @@ public class UIClient implements ServerMessageObserver {
         }
     }
 
-    private int getCurrentGameID() {
-        return games.stream()
-                .filter(game -> username.equals(game.whiteUsername()) || username.equals(game.blackUsername()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No game is currently active."))
-                .gameID();
-    }
-
     private void handleMakeMove(String[] parts) {
         if (parts.length < 3) {
             System.out.println("Usage: make_move <START> <END>");
